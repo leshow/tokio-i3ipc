@@ -1,3 +1,5 @@
+use serde_derive::{Deserialize, Serialize};
+
 use crate::reply;
 
 // #[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
@@ -20,8 +22,25 @@ pub enum Event {
     Mode,
     Window,
     BarConfigUpdate,
+    Binding,
     Shutdown,
     Tick,
+}
+
+impl From<usize> for Event {
+    fn from(num: usize) -> Self {
+        match num {
+            0 => Event::Workspace,
+            1 => Event::Output,
+            2 => Event::Mode,
+            3 => Event::Window,
+            4 => Event::BarConfigUpdate,
+            5 => Event::Binding,
+            6 => Event::Shutdown,
+            7 => Event::Tick,
+            _ => panic!("Unknown event found"),
+        }
+    }
 }
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone)]

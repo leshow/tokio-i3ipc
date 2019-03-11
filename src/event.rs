@@ -2,19 +2,6 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::reply;
 
-// #[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
-// pub enum Event {
-//     Workspace(WorkspaceData), // consider boxing
-//     // one interesting thing about the Event from i3ipc, because enums take the size
-//     // of their largest variant, even small events take up a lot of space
-//     Output(OutputData),
-//     Mode(ModeData),
-//     Window(WindowData),
-//     BarConfigUpdate(BarConfigData),
-//     Shutdown(ShutdownData),
-//     Tick(TickData),
-// }
-
 #[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
 pub enum Event {
     Workspace,

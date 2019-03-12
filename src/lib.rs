@@ -1,11 +1,9 @@
+// re-export i3ipc-types so users only have to import 1 thing
+pub use i3ipc_types::*;
+
 use serde::de::DeserializeOwned;
-use tokio_uds::UnixStream;
-
 use std::{env, io, process::Command};
-
-pub mod event;
-pub mod msg;
-pub mod reply;
+use tokio_uds::UnixStream;
 
 #[derive(Debug)]
 pub struct I3 {

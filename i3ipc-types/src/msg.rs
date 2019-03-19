@@ -14,8 +14,8 @@ pub enum Msg {
     Sync,
 }
 
-impl From<usize> for Msg {
-    fn from(num: usize) -> Self {
+impl From<u32> for Msg {
+    fn from(num: u32) -> Self {
         match num {
             0 => Msg::RunCommand,
             1 => Msg::Workspaces,
@@ -30,6 +30,25 @@ impl From<usize> for Msg {
             10 => Msg::Tick,
             11 => Msg::Sync,
             _ => panic!("Unknown message type found"),
+        }
+    }
+}
+
+impl From<Msg> for u32 {
+    fn from(msg: Msg) -> Self {
+        match msg {
+            Msg::RunCommand => 0,
+            Msg::Workspaces => 1,
+            Msg::Subscribe => 2,
+            Msg::Outputs => 3,
+            Msg::Tree => 4,
+            Msg::Marks => 5,
+            Msg::BarConfig => 6,
+            Msg::Version => 7,
+            Msg::BindingModes => 8,
+            Msg::Config => 9,
+            Msg::Tick => 10,
+            Msg::Sync => 11,
         }
     }
 }

@@ -14,8 +14,8 @@ pub enum Event {
     Tick,
 }
 
-impl From<usize> for Event {
-    fn from(num: usize) -> Self {
+impl From<u32> for Event {
+    fn from(num: u32) -> Self {
         match num {
             0 => Event::Workspace,
             1 => Event::Output,
@@ -26,6 +26,21 @@ impl From<usize> for Event {
             6 => Event::Shutdown,
             7 => Event::Tick,
             _ => panic!("Unknown event found"),
+        }
+    }
+}
+
+impl From<Event> for u32 {
+    fn from(evt: Event) -> Self {
+        match evt {
+            Event::Workspace => 0,
+            Event::Output => 1,
+            Event::Mode => 2,
+            Event::Window => 3,
+            Event::BarConfigUpdate => 4,
+            Event::Binding => 5,
+            Event::Shutdown => 6,
+            Event::Tick => 7,
         }
     }
 }

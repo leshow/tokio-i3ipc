@@ -1,75 +1,34 @@
 // re-export i3ipc-types so users only have to import 1 thing
 pub use i3ipc_types::*;
 
-use bytes::{Buf, BufMut};
-use futures::Poll;
-use tokio_io::{AsyncRead, AsyncWrite};
+use bytes::{Buf, BufMut, Bytes, BytesMut, IntoBuf};
+use futures::{try_ready, Async, Future, Poll};
 use serde::de::DeserializeOwned;
-use tokio_core::reactor::Handle;
-use tokio_uds::UnixStream;
+use tokio_io::{AsyncRead, AsyncWrite};
+use tokio_uds::{ConnectFuture, UnixStream};
 
-use std::{env, io::{self, BufReader, Read, Write}, process::Command};
-
-#[derive(Debug)]
-pub struct I3(UnixStream);
+use std::{
+    env,
+    io::{self, Read, Write},
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 pub struct MsgResponse<D> {
     msg_type: msg::Msg,
     payload: D,
 }
 
-impl Read for I3 {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.0.read(buf)
-    }
+pub struct EventResponse<D> {
+    evt_type: event::Event,
+    payload: D,
 }
 
-impl AsyncRead for I3 {
-    unsafe fn prepare_uninitialized_buffer(&self, buf: &mut [u8]) -> bool {
-        self.0.prepare_uninitialized_buffer(buf)
-    }
+#[derive(Debug)]
+pub struct I3Connect(ConnectFuture);
 
-    fn read_buf<B>(&mut self, buf: &mut B) -> Poll<usize, io::Error>
-    where
-        B: BufMut,
-    {
-        self.0.read_buf(buf)
-    }
-}
-
-
-impl AsyncWrite for I3 {
-    fn shutdown(&mut self) ->Poll<(), io::Error> {        
-        self.0.shutdown(how)
-    }
-
-    fn write_buf<B>(&mut self, buf: &mut B) -> Poll<usize, io::Error>
-    where
-        B: Buf,
-    {
-
-            self.0.write_buf(buf)
-    }
-}
-
-impl Write for I3 {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.0.write(buf)
-    }
-    fn flush(&mut self) -> io::Result<()> {
-        self.0.flush()
-    }
-}
-
-impl I3 {
-    const MAGIC: &'static str = "i3-ipc";
-    pub fn new(handle: &Handle) -> io::Result<Self> {
-        let path = I3::socket_path()?;
-        let stream = UnixStream::connect(path);
-        Ok(I3(stream))
-    }
-
-    fn socket_path() -> io::Result<String> {
+impl I3Connect {
+    pub fn socket_path() -> io::Result<String> {
         if let Ok(p) = env::var("I3SOCK") {
             return Ok(p);
         }
@@ -83,25 +42,97 @@ impl I3 {
             ))
         }
     }
+    pub fn new() -> io::Result<Self> {
+        Ok(I3Connect(UnixStream::connect(I3Connect::socket_path()?)))
+    }
+    pub fn connect(&mut self) -> Poll<I3Stream, io::Error> {
+        let stream = try_ready!(self.0.poll());
+        Ok(Async::Ready(I3Stream(stream)))
+    }
+}
 
-    fn send_msg<P>(&mut self, msg: msg::Msg, payload: P, handle: &Handle) -> io::Result<()>
+#[derive(Debug)]
+pub struct I3Stream(UnixStream);
+
+impl I3Stream {
+    pub const MAGIC: &'static str = "i3-ipc";
+    pub fn subscribe<E, D>(&mut self, events: E) -> Poll<EventResponse<D>, io::Error>
     where
-        P: AsRef<str>,
+        E: AsRef<[event::Event]>,
+        D: DeserializeOwned,
     {
         unimplemented!()
     }
 
-    fn receive_msg<D: DeserializeOwned>(&mut self, handle: &Handle) -> io::Result<MsgResponse<D>> {
-        let magic_str = [0u8; 6];
-        self.read_exact(&mut magic_str);
+    pub fn send_msg<P>(&mut self, msg: msg::Msg, payload: P) -> Poll<usize, io::Error>
+    where
+        P: AsRef<str>,
+    {
+        let payload = payload.as_ref();
+        let mut buf = BytesMut::with_capacity(14 + payload.len());
+        buf.put_slice(I3Stream::MAGIC.as_bytes());
+        buf.put_u32_le(payload.len() as u32);
+        buf.put_u32_le(msg.into());
+        buf.put_slice(payload.as_bytes());
+        self.write_buf(&mut buf.into_buf())
+    }
+
+    pub fn receive_msg<D: DeserializeOwned>(&mut self) -> Poll<MsgResponse<D>, io::Error> {
+        let mut buf = BytesMut::with_capacity(6);
+        let l = try_ready!(self.read_buf(&mut buf));
+        dbg!(&buf);
+        let magic_str = buf.take();
+        if magic_str != I3Stream::MAGIC {
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                format!("Expected 'i3-ipc' but received: {:?}", magic_str),
+            ));
+        }
+
+        let len = try_ready!(self.read_buf(&mut buf));
         unimplemented!()
     }
 }
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+impl Read for I3Stream {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        self.0.read(buf)
+    }
+}
+
+impl Write for I3Stream {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.0.write(buf)
+    }
+    fn flush(&mut self) -> io::Result<()> {
+        self.0.flush()
+    }
+}
+
+impl AsyncRead for I3Stream {
+    unsafe fn prepare_uninitialized_buffer(&self, buf: &mut [u8]) -> bool {
+        self.0.prepare_uninitialized_buffer(buf)
+    }
+
+    fn read_buf<B>(&mut self, buf: &mut B) -> Poll<usize, io::Error>
+    where
+        B: BufMut,
+    {
+        self.0.read_buf(buf)
+    }
+}
+
+impl AsyncWrite for I3Stream {
+    fn shutdown(&mut self) -> Poll<(), io::Error> {
+        match self {
+            I3Stream(s) => s.shutdown(),
+        }
+    }
+
+    fn write_buf<B>(&mut self, buf: &mut B) -> Poll<usize, io::Error>
+    where
+        B: Buf,
+    {
+        self.0.write_buf(buf)
     }
 }

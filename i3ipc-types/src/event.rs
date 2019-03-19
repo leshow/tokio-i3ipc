@@ -3,12 +3,13 @@ use serde_derive::{Deserialize, Serialize};
 use crate::reply;
 
 #[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
+#[serde(rename_all = "snake_case")]
 pub enum Event {
     Workspace,
     Output,
     Mode,
     Window,
-    BarConfigUpdate,
+    BarconfigUpdate,
     Binding,
     Shutdown,
     Tick,
@@ -21,7 +22,7 @@ impl From<u32> for Event {
             1 => Event::Output,
             2 => Event::Mode,
             3 => Event::Window,
-            4 => Event::BarConfigUpdate,
+            4 => Event::BarconfigUpdate,
             5 => Event::Binding,
             6 => Event::Shutdown,
             7 => Event::Tick,
@@ -37,7 +38,7 @@ impl From<Event> for u32 {
             Event::Output => 1,
             Event::Mode => 2,
             Event::Window => 3,
-            Event::BarConfigUpdate => 4,
+            Event::BarconfigUpdate => 4,
             Event::Binding => 5,
             Event::Shutdown => 6,
             Event::Tick => 7,
@@ -106,7 +107,7 @@ pub enum WindowChange {
     Mark,
 }
 
-pub type BarConfigData = reply::BarConfig;
+pub type BarconfigData = reply::Barconfig;
 
 #[derive(Deserialize, Serialize, Eq, Hash, PartialEq, Debug, Clone)]
 pub struct BindingData {

@@ -1,5 +1,6 @@
 // re-export i3ipc-types so users only have to import 1 thing
 pub use i3ipc_types::*;
+use msg::Msg;
 
 use bytes::{Buf, BufMut, Bytes, BytesMut, IntoBuf};
 use futures::{try_ready, Async, Future, Poll};
@@ -15,13 +16,13 @@ use std::{
 };
 
 pub struct MsgResponse<D> {
-    msg_type: msg::Msg,
-    payload: D,
+    pub msg_type: msg::Msg,
+    pub payload: D,
 }
 
 pub struct EventResponse<D> {
-    evt_type: event::Event,
-    payload: D,
+    pub evt_type: event::Event,
+    pub payload: D,
 }
 
 #[derive(Debug)]
@@ -61,7 +62,12 @@ impl I3Stream {
         E: AsRef<[event::Event]>,
         D: DeserializeOwned,
     {
-        unimplemented!()
+        let sub_json = serde_json::to_string(events.as_ref())?;
+        loop {
+            let _ = try_ready!(self.send_msg(Msg::Subscribe, &sub_json));
+            let resp: MsgResponse<reply::Success> = try_ready!(self.receive_msg());
+            unimplemented!()
+        }
     }
 
     pub fn send_msg<P>(&mut self, msg: msg::Msg, payload: P) -> Poll<usize, io::Error>
@@ -90,6 +96,10 @@ impl I3Stream {
         }
 
         let len = try_ready!(self.read_buf(&mut buf));
+        unimplemented!()
+    }
+
+    pub fn send_receive<D: DeserializeOwned>(&mut self) -> Poll<MsgResponse<D>, io::Error> {
         unimplemented!()
     }
 }

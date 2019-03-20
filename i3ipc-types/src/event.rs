@@ -9,7 +9,8 @@ pub enum Event {
     Output,
     Mode,
     Window,
-    BarconfigUpdate,
+    #[serde(rename = "barconfig_update")]
+    BarConfigUpdate,
     Binding,
     Shutdown,
     Tick,
@@ -22,7 +23,7 @@ impl From<u32> for Event {
             1 => Event::Output,
             2 => Event::Mode,
             3 => Event::Window,
-            4 => Event::BarconfigUpdate,
+            4 => Event::BarConfigUpdate,
             5 => Event::Binding,
             6 => Event::Shutdown,
             7 => Event::Tick,
@@ -38,7 +39,7 @@ impl From<Event> for u32 {
             Event::Output => 1,
             Event::Mode => 2,
             Event::Window => 3,
-            Event::BarconfigUpdate => 4,
+            Event::BarConfigUpdate => 4,
             Event::Binding => 5,
             Event::Shutdown => 6,
             Event::Tick => 7,
@@ -107,7 +108,7 @@ pub enum WindowChange {
     Mark,
 }
 
-pub type BarconfigData = reply::Barconfig;
+pub type BarConfigData = reply::BarConfig;
 
 #[derive(Deserialize, Serialize, Eq, Hash, PartialEq, Debug, Clone)]
 pub struct BindingData {

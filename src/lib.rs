@@ -1,6 +1,5 @@
 // re-export i3ipc-types so users only have to import 1 thing
 pub use i3ipc_types::*;
-use msg::Msg;
 
 use bytes::{Buf, BufMut, Bytes, BytesMut, IntoBuf};
 use futures::{try_ready, Async, Future, Poll};
@@ -13,13 +12,16 @@ use std::{
     io::{self, Read, Write},
     path::{Path, PathBuf},
     process::Command,
+    os::unix::net,
 };
 
+#[derive(Debug)]
 pub struct MsgResponse<D> {
     pub msg_type: msg::Msg,
     pub payload: D,
 }
 
+#[derive(Debug)]
 pub struct EventResponse<D> {
     pub evt_type: event::Event,
     pub payload: D,
@@ -50,6 +52,10 @@ impl I3Connect {
         let stream = try_ready!(self.0.poll());
         Ok(Async::Ready(I3Stream(stream)))
     }
+    pub fn from_stream(handle: &Handle) -> io::Result<I3Stream> {
+        let std_stream = net::UnixStream::new(I3Connect::socket_path()?);
+        UnixStream::from_std(std_stream, handle)
+    }
 }
 
 #[derive(Debug)]
@@ -66,7 +72,8 @@ impl I3Stream {
         loop {
             let _ = try_ready!(self.send_msg(Msg::Subscribe, &sub_json));
             let resp: MsgResponse<reply::Success> = try_ready!(self.receive_msg());
-            unimplemented!()
+dbg!(resp);
+unimplemented!()
         }
     }
 
@@ -146,3 +153,18 @@ impl AsyncWrite for I3Stream {
         self.0.write_buf(buf)
     }
 }
+
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+
+//     #[test]
+//     fn test() -> Result<(), Box<dyn std::error::Error>> {
+//         let fut = I3Connect::new()?.connect().and_then(|stream| {
+//             stream.subscribe(&[event::Event::Window]).map(|o| {dbg!(o); () }).map_err(|e| eprintln!("{:?}", e));
+//             futures::ok(())
+//         });
+//         tokio::run(fut);
+//         Ok(())
+//     }
+// }

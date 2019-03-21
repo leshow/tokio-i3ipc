@@ -7,7 +7,7 @@ use super::event::Event;
 use super::msg::Msg;
 use super::reply;
 use super::{I3Connect, I3Stream};
-use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+
 use std::{
     env,
     io::{self, Read, Write},
@@ -28,17 +28,12 @@ mod test {
 
                 let events = [Event::Window];
                 let payload = serde_json::to_string(&events).unwrap();
-                // let mut buf = BytesMut::with_capacity(14 + payload.len());
-                // buf.put_slice(I3Stream::MAGIC.as_bytes());
-                // buf.put_u32_le(payload.len() as u32);
-                // buf.put_u32_le(2);
-                // buf.put_slice(payload.as_bytes());
-                // println!("{:#?}", buf);
-                let mut buf = Vec::with_capacity(14 + payload.len());
-                buf.extend("i3-ipc".bytes()); // 6 bytes
-                buf.write_u32::<LittleEndian>(payload.len() as u32).unwrap(); // 4 bytes
-                buf.write_u32::<LittleEndian>(2).unwrap(); // 4 bytes
-                buf.extend(payload.bytes()); // payload.len() bytes
+                let mut buf = BytesMut::with_capacity(14 + payload.len());
+                buf.put_slice(I3Stream::MAGIC.as_bytes());
+                buf.put_u32_le(payload.len() as u32);
+                buf.put_u32_le(2);
+                buf.put_slice(payload.as_bytes());
+                println!("{:#?}", buf);
 
                 println!("{:#?}", buf);
                 tokio::io::write_all(stream, buf)

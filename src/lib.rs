@@ -1,5 +1,6 @@
 // re-export i3ipc-types so users only have to import 1 thing
 pub use i3ipc_types::*;
+mod codec;
 
 use bytes::{Buf, BufMut, Bytes, BytesMut, IntoBuf};
 use futures::{try_ready, Async, Future, Poll};
@@ -10,9 +11,9 @@ use tokio_uds::{ConnectFuture, UnixStream};
 use std::{
     env,
     io::{self, Read, Write},
+    os::unix::net,
     path::{Path, PathBuf},
     process::Command,
-    os::unix::net,
 };
 
 #[derive(Debug)]
@@ -52,9 +53,9 @@ impl I3Connect {
         let stream = try_ready!(self.0.poll());
         Ok(Async::Ready(I3Stream(stream)))
     }
-    pub fn from_stream(handle: &Handle) -> io::Result<I3Stream> {
-        let std_stream = net::UnixStream::new(I3Connect::socket_path()?);
-        UnixStream::from_std(std_stream, handle)
+    pub fn from_stream(handle: &tokio::reactor::Handle) -> io::Result<I3Stream> {
+        let std_stream = net::UnixStream::connect(I3Connect::socket_path()?)?;
+        Ok(I3Stream(UnixStream::from_std(std_stream, handle)?))
     }
 }
 
@@ -70,10 +71,10 @@ impl I3Stream {
     {
         let sub_json = serde_json::to_string(events.as_ref())?;
         loop {
-            let _ = try_ready!(self.send_msg(Msg::Subscribe, &sub_json));
+            let _ = try_ready!(self.send_msg(msg::Msg::Subscribe, &sub_json));
             let resp: MsgResponse<reply::Success> = try_ready!(self.receive_msg());
-dbg!(resp);
-unimplemented!()
+            dbg!(resp);
+            unimplemented!()
         }
     }
 

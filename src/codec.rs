@@ -40,21 +40,33 @@ fn read_socket() -> io::Result<()> {
             println!("got: {:?}", buf);
         })
         .and_then(|(stream, initial)| {
-            // if &initial[0..6] != I3Stream::MAGIC.as_bytes() {
-            // return Err(io::Error::new(io::ErrorKind::Other, ""));
-            // }
+            if &initial[0..6] != I3Stream::MAGIC.as_bytes() {
+                panic!("Magic str not received");
+            }
             let payload_len: u32 = LittleEndian::read_u32(&initial[6..10]);
             dbg!(payload_len);
             let msg_type: u32 = LittleEndian::read_u32(&initial[10..14]);
             dbg!(msg_type);
             dbg!(String::from_utf8(initial[14..].to_vec()).unwrap());
-            let payload: Vec<u8> = Vec::with_capacity(payload_len as usize);
-            tokio::io::read_exact(stream, payload)
+            future::ok(stream)
+        })
+        .and_then(|stream| {
+            // let buf = Vec::new();
+            let buf = [0; 14];
+            tokio::io::read_exact(stream, buf)
+        })
+        .and_then(|(stream, initial)| {
+            if &initial[0..6] != I3Stream::MAGIC.as_bytes() {
+                panic!("Magic str not received");
+            }
+            let payload_len = LittleEndian::read_u32(&initial[6..10]) as usize;
+            dbg!(payload_len);
+            let buf = vec![0; payload_len];
+            tokio::io::read_exact(stream, buf)
         })
         .and_then(|(_stream, buf)| {
-            dbg!(&buf);
-            // let s = String::from_utf8(buf).unwrap();
-            println!("{:?}", buf);
+            let s = String::from_utf8(buf.to_vec()).unwrap();
+            println!("{:?}", s);
             let out: reply::Node = serde_json::from_slice(&buf[..]).unwrap();
             dbg!(out);
             future::ok(())

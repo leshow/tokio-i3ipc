@@ -1,4 +1,5 @@
 use serde_derive::{Deserialize, Serialize};
+use serde_repr::{Serialize_repr, Deserialize_repr};
 
 use std::collections::HashMap;
 
@@ -48,8 +49,27 @@ pub struct Node {
     pub focused: bool,
     pub focus: Vec<i64>,
     pub sticky: bool,
+    pub floating: Floating,
     pub floating_nodes: Vec<Node>,
+    pub fullscreen_mode: FullscreenMode,
     pub nodes: Vec<Node>,
+}
+
+#[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
+#[serde(rename_all = "snake_case")]
+pub enum Floating {
+    AutoOff,
+    AutoOn,
+    UserOff,
+    UserOn,
+}
+
+#[derive(Deserialize_repr, Serialize_repr, Eq, PartialEq, Clone, Hash, Debug)]
+#[repr(u8)]
+pub enum FullscreenMode {
+    None = 0,
+    Output = 1,
+    Global = 2,
 }
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]

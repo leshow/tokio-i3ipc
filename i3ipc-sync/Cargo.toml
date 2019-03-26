@@ -1,10 +1,10 @@
 [package]
-name = "i3ipc-types"
+name = "i3ipc-sync"
 version = "0.1.0"
 authors = ["Evan Cameron <cameron.evan@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+i3ipc-types = {version = "*", path = "../i3ipc-types" }
 serde = "1.0"
-serde_repr = "0.1"
-serde_derive = "1.0"
+serde_json = "1.0"

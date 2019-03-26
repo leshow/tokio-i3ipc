@@ -19,4 +19,4 @@ futures = "0.1"
 i3ipc-types = { path = "i3ipc-types" }
 
 [workspace]
-members = ["./", "i3ipc-types"]
+members = ["./", "i3ipc-sync", "i3ipc-types"]

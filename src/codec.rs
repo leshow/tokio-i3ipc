@@ -5,6 +5,7 @@ use tokio::prelude::*;
 use tokio_uds::UnixStream;
 
 use super::event::Event;
+use super::socket_path;
 use super::msg::Msg;
 use super::reply;
 use super::{I3Connect, I3Stream};
@@ -18,7 +19,7 @@ use std::{
 };
 
 fn subscribe() -> io::Result<()> {
-    let fut = UnixStream::connect(I3Connect::socket_path()?)
+    let fut = UnixStream::connect(socket_path()?)
         .and_then(|stream| {
             let events = [Event::Window];
             let payload = serde_json::to_string(&events).unwrap();

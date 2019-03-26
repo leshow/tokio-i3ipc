@@ -9,52 +9,24 @@ use tokio_io::{AsyncRead, AsyncWrite};
 use tokio_uds::{ConnectFuture, UnixStream};
 
 use std::{
-    env,
     io::{self, Read, Write},
     os::unix::net,
-    path::{Path, PathBuf},
-    process::Command,
 };
 
-#[derive(Debug)]
-pub struct MsgResponse<D> {
-    pub msg_type: msg::Msg,
-    pub payload: D,
-}
-
-#[derive(Debug)]
-pub struct EventResponse<D> {
-    pub evt_type: event::Event,
-    pub payload: D,
-}
 
 #[derive(Debug)]
 pub struct I3Connect(ConnectFuture);
 
 impl I3Connect {
-    pub fn socket_path() -> io::Result<String> {
-        if let Ok(p) = env::var("I3SOCK") {
-            return Ok(p);
-        }
-        let out = Command::new("i3").arg("--get-socketpath").output()?;
-        if out.status.success() {
-            Ok(String::from_utf8_lossy(&out.stdout).trim_end().to_string())
-        } else {
-            Err(io::Error::new(
-                io::ErrorKind::BrokenPipe,
-                "Unable to get i3 socket path",
-            ))
-        }
-    }
     pub fn new() -> io::Result<Self> {
-        Ok(I3Connect(UnixStream::connect(I3Connect::socket_path()?)))
+        Ok(I3Connect(UnixStream::connect(socket_path()?)))
     }
     pub fn connect(&mut self) -> Poll<I3Stream, io::Error> {
         let stream = try_ready!(self.0.poll());
         Ok(Async::Ready(I3Stream(stream)))
     }
     pub fn from_stream(handle: &tokio::reactor::Handle) -> io::Result<I3Stream> {
-        let std_stream = net::UnixStream::connect(I3Connect::socket_path()?)?;
+        let std_stream = net::UnixStream::connect(socket_path()?)?;
         Ok(I3Stream(UnixStream::from_std(std_stream, handle)?))
     }
 }

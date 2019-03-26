@@ -17,7 +17,7 @@ use std::{
     process::Command,
 };
 
-fn read_socket() -> io::Result<()> {
+fn subscribe() -> io::Result<()> {
     let fut = UnixStream::connect(I3Connect::socket_path()?)
         .and_then(|stream| {
             let events = [Event::Window];
@@ -32,8 +32,7 @@ fn read_socket() -> io::Result<()> {
             tokio::io::write_all(stream, buf)
         })
         .and_then(|(stream, _buf)| {
-            // let buf = BytesMut::with_capacity(14);
-            let buf = [0_u8; 30]; // <i3-ipc (6 bytes)><len (4 bytes)><type (4 bytes)>
+            let buf = [0_u8; 30]; // <i3-ipc (6 bytes)><len (4 bytes)><type (4 bytes)><{success:true} 16 bytes>
             tokio::io::read_exact(stream, buf)
         })
         .inspect(|(_stream, buf)| {
@@ -51,7 +50,6 @@ fn read_socket() -> io::Result<()> {
             future::ok(stream)
         })
         .and_then(|stream| {
-            // let buf = Vec::new();
             let buf = [0; 14];
             tokio::io::read_exact(stream, buf)
         })
@@ -86,8 +84,8 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_read_socket() -> io::Result<()> {
-        read_socket()?;
+    fn test_sub() -> io::Result<()> {
+        subscribe()?;
         Ok(())
     }
 

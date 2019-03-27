@@ -7,13 +7,13 @@ pub mod reply;
 #[derive(Debug)]
 pub struct MsgResponse<D> {
     pub msg_type: msg::Msg,
-    pub payload: D,
+    pub body: D,
 }
 
 #[derive(Debug)]
 pub struct EventResponse<D> {
     pub evt_type: event::Event,
-    pub payload: D,
+    pub body: D,
 }
 
 pub fn socket_path() -> io::Result<String> {

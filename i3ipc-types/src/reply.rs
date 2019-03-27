@@ -6,6 +6,7 @@ use std::collections::HashMap;
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
 pub struct Success {
     pub success: bool,
+    pub error: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]

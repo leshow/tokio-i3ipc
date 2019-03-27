@@ -11,7 +11,7 @@ pub struct MsgResponse<D> {
 }
 
 #[derive(Debug)]
-pub struct EventResponse<D> {
+pub struct EventResp<D> {
     pub evt_type: event::Event,
     pub body: D,
 }

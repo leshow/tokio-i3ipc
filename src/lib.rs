@@ -36,7 +36,7 @@ pub struct I3Stream(UnixStream);
 
 impl I3Stream {
     pub const MAGIC: &'static str = "i3-ipc";
-    pub fn subscribe<E, D>(&mut self, events: E) -> Poll<EventResponse<D>, io::Error>
+    pub fn subscribe<E, D>(&mut self, events: E) -> Poll<EventResp<D>, io::Error>
     where
         E: AsRef<[event::Event]>,
         D: DeserializeOwned,

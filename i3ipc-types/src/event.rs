@@ -47,6 +47,17 @@ impl From<Event> for u32 {
     }
 }
 
+pub enum EventResponse {
+    Workspace(Box<WorkspaceData>),
+    Output(OutputData),
+    Mode(ModeData),
+    Window(Box<WindowData>),
+    BarConfig(BarConfigData),
+    Binding(BindingData),
+    Shutdown(ShutdownData),
+    Tick(TickData),
+}
+
 #[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum WorkspaceChange {

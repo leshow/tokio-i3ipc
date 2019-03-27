@@ -75,6 +75,13 @@ impl I3Stream {
         Ok(resp)
     }
 
+    pub fn listen<'a, D: DeserializeOwned>(&'a mut self) -> I3Iter<'a, D> {
+        I3Iter {
+            stream: &mut self.0,
+            marker: PhantomData,
+        }
+    }
+
     pub fn send_msg<P>(&mut self, msg: msg::Msg, payload: P) -> io::Result<usize>
     where
         P: AsRef<str>,
@@ -89,6 +96,62 @@ impl I3Stream {
             msg_type: msg_type.into(),
             body: serde_json::from_slice(&payload_bytes[..])?,
         })
+    }
+
+    pub fn receive_evt_2<D: DeserializeOwned>(
+        &mut self,
+    ) -> io::Result<EventResp<impl DeserializeOwned>> {
+        use event::{Event, EventResponse};
+        let (evt_type, payload_bytes) = self.decode_msg()?;
+        let evt_type = evt_type.into();
+        let body = match evt_type {
+            Event::Workspace => serde_json::from_slice::<event::WorkspaceData>(&payload_bytes[..])?,
+            Event::Output => serde_json::from_slice::<event::OutputData>(&payload_bytes[..])?,
+            Event::Mode => serde_json::from_slice::<event::ModeData>(&payload_bytes[..])?,
+            Event::Window => serde_json::from_slice::<event::WindowData>(&payload_bytes[..])?,
+            Event::BarConfigUpdate => {
+                serde_json::from_slice::<event::BarConfigData>(&payload_bytes[..])?
+            }
+            Event::Binding => serde_json::from_slice::<event::BindingData>(&payload_bytes[..])?,
+            Event::Shutdown => serde_json::from_slice::<event::ShutdownData>(&payload_bytes[..])?,
+            Event::Tick => serde_json::from_slice::<event::TickData>(&payload_bytes[..])?,
+        };
+        Ok(EventResp { evt_type, body })
+    }
+
+    pub fn receive_evt(&mut self) -> io::Result<event::EventResponse> {
+        use event::{Event, EventResponse};
+        let (evt_type, payload_bytes) = self.decode_msg()?;
+        let evt_type = evt_type.into();
+        let body = match evt_type {
+            Event::Workspace => {
+                EventResponse::Workspace(Box::new(serde_json::from_slice::<event::WorkspaceData>(
+                    &payload_bytes[..],
+                )?))
+            }
+            Event::Output => EventResponse::Output(serde_json::from_slice::<event::OutputData>(
+                &payload_bytes[..],
+            )?),
+            Event::Mode => EventResponse::Mode(serde_json::from_slice::<event::ModeData>(
+                &payload_bytes[..],
+            )?),
+            Event::Window => EventResponse::Window(Box::new(serde_json::from_slice::<
+                event::WindowData,
+            >(&payload_bytes[..])?)),
+            Event::BarConfigUpdate => EventResponse::BarConfig(serde_json::from_slice::<
+                event::BarConfigData,
+            >(&payload_bytes[..])?),
+            Event::Binding => EventResponse::Binding(serde_json::from_slice::<event::BindingData>(
+                &payload_bytes[..],
+            )?),
+            Event::Shutdown => EventResponse::Shutdown(serde_json::from_slice::<
+                event::ShutdownData,
+            >(&payload_bytes[..])?),
+            Event::Tick => EventResponse::Tick(serde_json::from_slice::<event::TickData>(
+                &payload_bytes[..],
+            )?),
+        };
+        Ok(body)
     }
 
     pub fn send_receive<P, D>(&mut self, msg: msg::Msg, payload: P) -> io::Result<MsgResponse<D>>
@@ -203,6 +266,26 @@ impl Write for I3Stream {
         self.0.flush()
     }
 }
+
+#[derive(Debug)]
+pub struct I3Iter<'a, D> {
+    stream: &'a mut UnixStream,
+    marker: PhantomData<D>,
+}
+
+use std::error::Error;
+use std::marker::PhantomData;
+
+// impl<'a, D> Iterator for I3Iter<'a, D>
+// where
+//     D: DeserializeOwned,
+// {
+//     type Item = Result<EventResponse<D>, serde_json::Error>;
+
+//     fn next(&mut self) -> Option<Self::Item> {
+//         self.stream.receive_msg()
+//     }
+// }
 
 #[cfg(test)]
 mod tests {

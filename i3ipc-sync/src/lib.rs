@@ -7,9 +7,9 @@ use std::{
     os::unix::net::UnixStream,
 };
 
-pub struct I3Connect;
+pub struct I3;
 
-impl I3Connect {
+impl I3 {
     pub fn connect() -> io::Result<I3Stream> {
         Ok(I3Stream(UnixStream::connect(socket_path()?)?))
     }
@@ -98,37 +98,37 @@ impl I3Stream {
         })
     }
 
-    pub fn receive_evt(&mut self) -> io::Result<event::EventResponse> {
-        use event::{Event, EventResponse};
+    pub fn receive_evt(&mut self) -> io::Result<event::Evt> {
+        use event::{Event, Evt};
         let (mut evt_type, payload_bytes) = self.decode_msg()?;
         evt_type &= !(1 << 31);
         dbg!(&evt_type);
         // dbg!()
         let body = match evt_type.into() {
             Event::Workspace => {
-                EventResponse::Workspace(Box::new(serde_json::from_slice::<event::WorkspaceData>(
+                Evt::Workspace(Box::new(serde_json::from_slice::<event::WorkspaceData>(
                     &payload_bytes[..],
                 )?))
             }
-            Event::Output => EventResponse::Output(serde_json::from_slice::<event::OutputData>(
+            Event::Output => Evt::Output(serde_json::from_slice::<event::OutputData>(
                 &payload_bytes[..],
             )?),
-            Event::Mode => EventResponse::Mode(serde_json::from_slice::<event::ModeData>(
+            Event::Mode => Evt::Mode(serde_json::from_slice::<event::ModeData>(
                 &payload_bytes[..],
             )?),
-            Event::Window => EventResponse::Window(Box::new(serde_json::from_slice::<
+            Event::Window => Evt::Window(Box::new(serde_json::from_slice::<
                 event::WindowData,
             >(&payload_bytes[..])?)),
-            Event::BarConfigUpdate => EventResponse::BarConfig(serde_json::from_slice::<
+            Event::BarConfigUpdate => Evt::BarConfig(serde_json::from_slice::<
                 event::BarConfigData,
             >(&payload_bytes[..])?),
-            Event::Binding => EventResponse::Binding(serde_json::from_slice::<event::BindingData>(
+            Event::Binding => Evt::Binding(serde_json::from_slice::<event::BindingData>(
                 &payload_bytes[..],
             )?),
-            Event::Shutdown => EventResponse::Shutdown(serde_json::from_slice::<
+            Event::Shutdown => Evt::Shutdown(serde_json::from_slice::<
                 event::ShutdownData,
             >(&payload_bytes[..])?),
-            Event::Tick => EventResponse::Tick(serde_json::from_slice::<event::TickData>(
+            Event::Tick => Evt::Tick(serde_json::from_slice::<event::TickData>(
                 &payload_bytes[..],
             )?),
         };
@@ -256,9 +256,10 @@ mod tests {
     use std::io;
     #[test]
     fn it_works() -> io::Result<()> {
-        let mut i3 = I3Connect::connect()?;
+        let mut i3 = I3::connect()?;
         let resp = i3.subscribe(&[event::Event::Window])?;
         for e in i3.listen() {
+            let e = e?;
             println!("{:?}", e);
         }
         Ok(())

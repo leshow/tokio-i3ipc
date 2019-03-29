@@ -47,6 +47,7 @@ impl From<Event> for u32 {
     }
 }
 
+#[derive(Debug)]
 pub enum EventResponse {
     Workspace(Box<WorkspaceData>),
     Output(OutputData),
@@ -131,7 +132,7 @@ pub struct BindingData {
 pub struct BindingObject {
     pub command: String,
     pub event_state_mask: Vec<String>,
-    pub input_code: i32,
+    pub input_code: usize,
     pub symbol: Option<String>,
     pub input_type: BindType,
 }

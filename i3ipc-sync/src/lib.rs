@@ -21,7 +21,7 @@ pub struct I3Stream(UnixStream);
 impl I3Stream {
     pub const MAGIC: &'static str = "i3-ipc";
 
-    fn encode_msg_body<P>(&mut self, msg: msg::Msg, payload: P) -> Vec<u8>
+    fn encode_msg_body<P>(&self, msg: msg::Msg, payload: P) -> Vec<u8>
     where
         P: AsRef<str>,
     {
@@ -34,7 +34,7 @@ impl I3Stream {
         buf
     }
 
-    fn encode_msg(&mut self, msg: msg::Msg) -> Vec<u8> {
+    fn encode_msg(&self, msg: msg::Msg) -> Vec<u8> {
         let mut buf = Vec::with_capacity(14);
         buf.extend(I3Stream::MAGIC.as_bytes());
         buf.extend(&(0_u32).to_ne_bytes());
@@ -58,28 +58,26 @@ impl I3Stream {
         // get msg type
         let mut msgbuf = [0_u8; 4];
         self.read_exact(&mut msgbuf)?;
-        let msgtype = u32::from_be_bytes(msgbuf);
+        let msgtype = u32::from_ne_bytes(msgbuf);
         // get payload
         let mut payload_buf = vec![0_u8; len as usize];
         self.read_exact(&mut payload_buf)?;
         Ok((msgtype, payload_buf))
     }
 
-    pub fn subscribe<E>(&mut self, events: E) -> io::Result<MsgResponse<reply::Success>>
+    pub fn subscribe<E>(&mut self, events: E) -> io::Result<reply::Success>
     where
         E: AsRef<[event::Event]>,
     {
         let sub_json = serde_json::to_string(events.as_ref())?;
         self.send_msg(msg::Msg::Subscribe, &sub_json)?;
         let resp: MsgResponse<reply::Success> = self.receive_msg()?;
-        Ok(resp)
+        dbg!(&resp.body);
+        Ok(resp.body)
     }
 
-    pub fn listen<'a, D: DeserializeOwned>(&'a mut self) -> I3Iter<'a, D> {
-        I3Iter {
-            stream: &mut self.0,
-            marker: PhantomData,
-        }
+    pub fn listen(&'_ mut self) -> I3Iter<'_> {
+        I3Iter { stream: self }
     }
 
     pub fn send_msg<P>(&mut self, msg: msg::Msg, payload: P) -> io::Result<usize>
@@ -92,38 +90,21 @@ impl I3Stream {
 
     pub fn receive_msg<D: DeserializeOwned>(&mut self) -> io::Result<MsgResponse<D>> {
         let (msg_type, payload_bytes) = self.decode_msg()?;
+        dbg!(&msg_type);
+        dbg!(&payload_bytes);
         Ok(MsgResponse {
             msg_type: msg_type.into(),
             body: serde_json::from_slice(&payload_bytes[..])?,
         })
     }
 
-    pub fn receive_evt_2<D: DeserializeOwned>(
-        &mut self,
-    ) -> io::Result<EventResp<impl DeserializeOwned>> {
-        use event::{Event, EventResponse};
-        let (evt_type, payload_bytes) = self.decode_msg()?;
-        let evt_type = evt_type.into();
-        let body = match evt_type {
-            Event::Workspace => serde_json::from_slice::<event::WorkspaceData>(&payload_bytes[..])?,
-            Event::Output => serde_json::from_slice::<event::OutputData>(&payload_bytes[..])?,
-            Event::Mode => serde_json::from_slice::<event::ModeData>(&payload_bytes[..])?,
-            Event::Window => serde_json::from_slice::<event::WindowData>(&payload_bytes[..])?,
-            Event::BarConfigUpdate => {
-                serde_json::from_slice::<event::BarConfigData>(&payload_bytes[..])?
-            }
-            Event::Binding => serde_json::from_slice::<event::BindingData>(&payload_bytes[..])?,
-            Event::Shutdown => serde_json::from_slice::<event::ShutdownData>(&payload_bytes[..])?,
-            Event::Tick => serde_json::from_slice::<event::TickData>(&payload_bytes[..])?,
-        };
-        Ok(EventResp { evt_type, body })
-    }
-
     pub fn receive_evt(&mut self) -> io::Result<event::EventResponse> {
         use event::{Event, EventResponse};
-        let (evt_type, payload_bytes) = self.decode_msg()?;
-        let evt_type = evt_type.into();
-        let body = match evt_type {
+        let (mut evt_type, payload_bytes) = self.decode_msg()?;
+        evt_type &= !(1 << 31);
+        dbg!(&evt_type);
+        // dbg!()
+        let body = match evt_type.into() {
             Event::Workspace => {
                 EventResponse::Workspace(Box::new(serde_json::from_slice::<event::WorkspaceData>(
                     &payload_bytes[..],
@@ -241,17 +222,6 @@ impl I3Stream {
     }
 }
 
-// pub fn subscribe<E, D>(&mut self, events: E) -> io::Result<EventResponse<D>>
-// where
-//     E: AsRef<[event::Event]>,
-//     D: DeserializeOwned,
-// {
-//     let sub_json = serde_json::to_string(events.as_ref())?;
-//         self.send_msg(msg::Msg::Subscribe, &sub_json)?;
-//         let resp: MsgResponse<reply::Success> = self.receive_msg()?;
-//         unimplemented!()
-// }
-
 impl Read for I3Stream {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         self.0.read(buf)
@@ -268,29 +238,29 @@ impl Write for I3Stream {
 }
 
 #[derive(Debug)]
-pub struct I3Iter<'a, D> {
-    stream: &'a mut UnixStream,
-    marker: PhantomData<D>,
+pub struct I3Iter<'a> {
+    stream: &'a mut I3Stream,
 }
 
-use std::error::Error;
-use std::marker::PhantomData;
+impl<'a> Iterator for I3Iter<'a> {
+    type Item = io::Result<event::EventResponse>;
 
-// impl<'a, D> Iterator for I3Iter<'a, D>
-// where
-//     D: DeserializeOwned,
-// {
-//     type Item = Result<EventResponse<D>, serde_json::Error>;
-
-//     fn next(&mut self) -> Option<Self::Item> {
-//         self.stream.receive_msg()
-//     }
-// }
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(self.stream.receive_evt())
+    }
+}
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use std::io;
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+    fn it_works() -> io::Result<()> {
+        let mut i3 = I3Connect::connect()?;
+        let resp = i3.subscribe(&[event::Event::Window])?;
+        for e in i3.listen() {
+            println!("{:?}", e);
+        }
+        Ok(())
     }
 }

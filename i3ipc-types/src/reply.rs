@@ -1,5 +1,5 @@
 use serde_derive::{Deserialize, Serialize};
-use serde_repr::{Serialize_repr, Deserialize_repr};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use std::collections::HashMap;
 
@@ -11,7 +11,7 @@ pub struct Success {
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
 pub struct Workspace {
-    pub num: i32,
+    pub num: usize,
     pub name: String,
     pub visible: bool,
     pub focused: bool,
@@ -33,7 +33,7 @@ pub struct Outputs {
 #[derive(Deserialize, Serialize, PartialEq, Clone, Debug)]
 // TODO manually impl Eq
 pub struct Node {
-    pub id: i32,
+    pub id: usize,
     pub name: Option<String>,
     #[serde(rename = "type")]
     pub node_type: NodeType,
@@ -85,10 +85,10 @@ pub enum WindowProperty {
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
 pub struct Rect {
-    pub x: i32,
-    pub y: i32,
-    pub width: i32,
-    pub height: i32,
+    pub x: usize,
+    pub y: usize,
+    pub width: usize,
+    pub height: usize,
 }
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
@@ -102,6 +102,7 @@ pub enum NodeType {
     Dockarea,
 }
 #[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone)]
+#[serde(rename_all = "lowercase")]
 pub enum NodeBorder {
     Normal,
     None,

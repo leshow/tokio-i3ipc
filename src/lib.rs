@@ -13,7 +13,6 @@ use std::{
     os::unix::net,
 };
 
-
 #[derive(Debug)]
 pub struct I3Connect(ConnectFuture);
 
@@ -36,19 +35,6 @@ pub struct I3Stream(UnixStream);
 
 impl I3Stream {
     pub const MAGIC: &'static str = "i3-ipc";
-    pub fn subscribe<E, D>(&mut self, events: E) -> Poll<EventResp<D>, io::Error>
-    where
-        E: AsRef<[event::Event]>,
-        D: DeserializeOwned,
-    {
-        let sub_json = serde_json::to_string(events.as_ref())?;
-        loop {
-            let _ = try_ready!(self.send_msg(msg::Msg::Subscribe, &sub_json));
-            let resp: MsgResponse<reply::Success> = try_ready!(self.receive_msg());
-            dbg!(resp);
-            unimplemented!()
-        }
-    }
 
     pub fn send_msg<P>(&mut self, msg: msg::Msg, payload: P) -> Poll<usize, io::Error>
     where

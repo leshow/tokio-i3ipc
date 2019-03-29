@@ -10,12 +10,6 @@ pub struct MsgResponse<D> {
     pub body: D,
 }
 
-#[derive(Debug)]
-pub struct EventResp<D> {
-    pub evt_type: event::Event,
-    pub body: D,
-}
-
 pub fn socket_path() -> io::Result<String> {
     if let Ok(p) = env::var("I3SOCK") {
         return Ok(p);

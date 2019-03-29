@@ -243,7 +243,7 @@ pub struct I3Iter<'a> {
 }
 
 impl<'a> Iterator for I3Iter<'a> {
-    type Item = io::Result<event::EventResponse>;
+    type Item = io::Result<event::Evt>;
 
     fn next(&mut self) -> Option<Self::Item> {
         Some(self.stream.receive_evt())

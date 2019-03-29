@@ -9,6 +9,8 @@ pub struct Success {
     pub error: Option<String>,
 }
 
+pub type Workspaces = Vec<Workspace>;
+
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
 pub struct Workspace {
     pub num: usize,
@@ -20,8 +22,10 @@ pub struct Workspace {
     pub output: String,
 }
 
+pub type Outputs = Vec<Output>;
+
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
-pub struct Outputs {
+pub struct Output {
     pub name: String,
     pub active: bool,
     pub primary: bool,
@@ -179,9 +183,9 @@ pub enum BarPart {
 /// Version reply
 #[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone)]
 pub struct Version {
-    pub major: i32,
-    pub minor: i32,
-    pub patch: i32,
+    pub major: usize,
+    pub minor: usize,
+    pub patch: usize,
     pub human_readable: String,
     pub loaded_config_file_name: String,
 }
@@ -194,4 +198,56 @@ pub struct BindingModes(Vec<String>);
 #[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone)]
 pub struct Config {
     pub config: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_output() {
+        let output = "{\"name\":\"xroot-0\",\"active\":false,\"primary\":false,\"rect\":{\"x\":0,\"y\":0,\"width\":5120,\"height\":1600},\"current_workspace\":null}";
+        let o: Result<Output, serde_json::error::Error> = serde_json::from_str(output);
+        assert!(o.is_ok());
+    }
+
+    #[test]
+    fn test_success() {
+        let output = "{\"success\":true}";
+        let o: Result<Success, serde_json::error::Error> = serde_json::from_str(output);
+        assert!(o.is_ok());
+    }
+
+    #[test]
+    fn test_workspace() {
+        let output = "{\"num\":2,\"name\":\"2\",\"visible\":false,\"focused\":false,\"rect\":{\"x\":2560,\"y\":29,\"width\":2560,\"height\":1571},\"output\":\"DVI-I-3\",\"urgent\":false}";
+        let o: Result<Workspace, serde_json::error::Error> = serde_json::from_str(output);
+        assert!(o.is_ok());
+    }
+    #[test]
+    fn test_binding_modes() {
+        let output = "[\"resize\",\"default\"]";
+        let o: Result<BindingModes, serde_json::error::Error> = serde_json::from_str(output);
+        assert!(o.is_ok());
+    }
+    #[test]
+    fn test_config() {
+        let output = "{\"config\": \"some config data here\"}";
+        let o: Result<Config, serde_json::error::Error> = serde_json::from_str(output);
+        assert!(o.is_ok());
+    }
+    #[test]
+    fn test_tree() {
+        use std::fs;
+        let output = fs::read_to_string("./test/tree.json").unwrap();
+        let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
+        assert!(o.is_ok());
+    }
+    #[test]
+    fn test_version() {
+        use std::fs;
+        let output = fs::read_to_string("./test/version.json").unwrap();
+        let o: Result<Version, serde_json::error::Error> = serde_json::from_str(&output);
+        assert!(o.is_ok());
+    }
 }

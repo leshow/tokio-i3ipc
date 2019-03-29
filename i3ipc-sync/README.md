@@ -22,3 +22,18 @@ fn main() -> io::Result<()> {
     }
 }
 ```
+
+Get all active workspaces & tree of nodes:
+
+```rust
+fn test_get_workspaces() -> io::Result<()> {
+    let mut i3 = I3::connect()?;
+    let workspaces = i3.get_workspaces()?;
+    println!("{:?}", workspaces);
+
+    let nodes = i3.get_tree()?;
+    println!("{:?}", nodes);
+
+    Ok(())
+}
+```

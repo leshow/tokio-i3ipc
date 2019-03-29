@@ -48,7 +48,7 @@ impl From<Event> for u32 {
 }
 
 #[derive(Debug)]
-pub enum EventResponse {
+pub enum Evt {
     Workspace(Box<WorkspaceData>),
     Output(OutputData),
     Mode(ModeData),

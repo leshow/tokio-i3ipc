@@ -91,7 +91,7 @@ impl I3Stream {
     pub fn receive_msg<D: DeserializeOwned>(&mut self) -> io::Result<MsgResponse<D>> {
         let (msg_type, payload_bytes) = self.decode_msg()?;
         dbg!(&msg_type);
-        dbg!(&payload_bytes);
+        dbg!(&String::from_utf8(payload_bytes.clone()).unwrap());
         Ok(MsgResponse {
             msg_type: msg_type.into(),
             body: serde_json::from_slice(&payload_bytes[..])?,
@@ -103,31 +103,28 @@ impl I3Stream {
         let (mut evt_type, payload_bytes) = self.decode_msg()?;
         evt_type &= !(1 << 31);
         dbg!(&evt_type);
-        // dbg!()
         let body = match evt_type.into() {
-            Event::Workspace => {
-                Evt::Workspace(Box::new(serde_json::from_slice::<event::WorkspaceData>(
-                    &payload_bytes[..],
-                )?))
-            }
+            Event::Workspace => Evt::Workspace(Box::new(serde_json::from_slice::<
+                event::WorkspaceData,
+            >(&payload_bytes[..])?)),
             Event::Output => Evt::Output(serde_json::from_slice::<event::OutputData>(
                 &payload_bytes[..],
             )?),
             Event::Mode => Evt::Mode(serde_json::from_slice::<event::ModeData>(
                 &payload_bytes[..],
             )?),
-            Event::Window => Evt::Window(Box::new(serde_json::from_slice::<
-                event::WindowData,
-            >(&payload_bytes[..])?)),
-            Event::BarConfigUpdate => Evt::BarConfig(serde_json::from_slice::<
-                event::BarConfigData,
-            >(&payload_bytes[..])?),
+            Event::Window => Evt::Window(Box::new(serde_json::from_slice::<event::WindowData>(
+                &payload_bytes[..],
+            )?)),
+            Event::BarConfigUpdate => Evt::BarConfig(
+                serde_json::from_slice::<event::BarConfigData>(&payload_bytes[..])?,
+            ),
             Event::Binding => Evt::Binding(serde_json::from_slice::<event::BindingData>(
                 &payload_bytes[..],
             )?),
-            Event::Shutdown => Evt::Shutdown(serde_json::from_slice::<
-                event::ShutdownData,
-            >(&payload_bytes[..])?),
+            Event::Shutdown => Evt::Shutdown(serde_json::from_slice::<event::ShutdownData>(
+                &payload_bytes[..],
+            )?),
             Event::Tick => Evt::Tick(serde_json::from_slice::<event::TickData>(
                 &payload_bytes[..],
             )?),
@@ -149,14 +146,14 @@ impl I3Stream {
         Ok(self.receive_msg()?.body)
     }
 
-    pub fn get_workspaces(&mut self) -> io::Result<Vec<reply::Workspace>> {
+    pub fn get_workspaces(&mut self) -> io::Result<reply::Workspaces> {
         let buf = self.encode_msg(msg::Msg::Workspaces);
         self.write_all(&buf[..])?;
         let resp: MsgResponse<Vec<reply::Workspace>> = self.receive_msg()?;
         Ok(resp.body)
     }
 
-    pub fn get_outputs(&mut self) -> io::Result<Vec<reply::Outputs>> {
+    pub fn get_outputs(&mut self) -> io::Result<reply::Outputs> {
         // self.send_msg(msg::Msg::Outputs, "")?;
         let buf = self.encode_msg(msg::Msg::Outputs);
         self.write_all(&buf[..])?;
@@ -255,13 +252,29 @@ mod tests {
     use super::*;
     use std::io;
     #[test]
-    fn it_works() -> io::Result<()> {
+    fn test_subscribe() -> io::Result<()> {
         let mut i3 = I3::connect()?;
         let resp = i3.subscribe(&[event::Event::Window])?;
         for e in i3.listen() {
             let e = e?;
             println!("{:?}", e);
         }
+        Ok(())
+    }
+
+    #[test]
+    fn test_get_workspaces() -> io::Result<()> {
+        let mut i3 = I3::connect()?;
+        let workspaces = i3.get_tree()?;
+        println!("{:?}", workspaces);
+        Ok(())
+    }
+
+    #[test]
+    fn test_get_outputs() -> io::Result<()> {
+        let mut i3 = I3::connect()?;
+        let outputs = i3.get_outputs()?;
+        println!("{:?}", outputs);
         Ok(())
     }
 }

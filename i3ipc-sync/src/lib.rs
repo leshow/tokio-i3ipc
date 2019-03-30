@@ -7,19 +7,37 @@ use std::{
     os::unix::net::UnixStream,
 };
 
+pub trait Connect {
+    type Stream: I3IPC;
+    fn connect() -> io::Result<Self::Stream>;
+}
+
 pub struct I3;
 
-impl I3 {
-    pub fn connect() -> io::Result<I3Stream> {
+impl Connect for I3 {
+    type Stream = I3Stream;
+    fn connect() -> io::Result<I3Stream> {
         Ok(I3Stream(UnixStream::connect(socket_path()?)?))
     }
 }
 
-#[derive(Debug)]
-pub struct I3Stream(UnixStream);
+pub trait I3IPC {
+    const MAGIC: &'static str = "i3-ipc";
+    fn encode_msg_body<P>(&self, msg: msg::Msg, payload: P) -> Vec<u8>
+    where
+        P: AsRef<str>;
+    fn encode_msg(&self, msg: msg::Msg) -> Vec<u8>;
+    fn decode_msg(&mut self) -> io::Result<(u32, Vec<u8>)>;
+}
 
-impl I3Stream {
-    pub const MAGIC: &'static str = "i3-ipc";
+impl I3IPC for I3Stream {
+    fn encode_msg(&self, msg: msg::Msg) -> Vec<u8> {
+        let mut buf = Vec::with_capacity(14);
+        buf.extend(I3Stream::MAGIC.as_bytes());
+        buf.extend(&(0_u32).to_ne_bytes());
+        buf.extend(&<u32 as From<msg::Msg>>::from(msg).to_ne_bytes());
+        buf
+    }
 
     fn encode_msg_body<P>(&self, msg: msg::Msg, payload: P) -> Vec<u8>
     where
@@ -31,14 +49,6 @@ impl I3Stream {
         buf.extend(&(payload.len() as u32).to_ne_bytes());
         buf.extend(&<u32 as From<msg::Msg>>::from(msg).to_ne_bytes());
         buf.extend(payload.as_bytes());
-        buf
-    }
-
-    fn encode_msg(&self, msg: msg::Msg) -> Vec<u8> {
-        let mut buf = Vec::with_capacity(14);
-        buf.extend(I3Stream::MAGIC.as_bytes());
-        buf.extend(&(0_u32).to_ne_bytes());
-        buf.extend(&<u32 as From<msg::Msg>>::from(msg).to_ne_bytes());
         buf
     }
 
@@ -64,7 +74,12 @@ impl I3Stream {
         self.read_exact(&mut payload_buf)?;
         Ok((msgtype, payload_buf))
     }
+}
 
+#[derive(Debug)]
+pub struct I3Stream(UnixStream);
+
+impl I3Stream {
     pub fn subscribe<E>(&mut self, events: E) -> io::Result<reply::Success>
     where
         E: AsRef<[event::Event]>,

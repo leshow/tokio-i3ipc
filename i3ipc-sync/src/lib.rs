@@ -7,27 +7,16 @@ use std::{
     os::unix::net::UnixStream,
 };
 
-pub trait Connect {
-    type Stream: I3IPC;
-    fn connect() -> io::Result<Self::Stream>;
-}
-
 pub struct I3;
+
+#[derive(Debug)]
+pub struct I3Stream(UnixStream);
 
 impl Connect for I3 {
     type Stream = I3Stream;
     fn connect() -> io::Result<I3Stream> {
         Ok(I3Stream(UnixStream::connect(socket_path()?)?))
     }
-}
-
-pub trait I3IPC {
-    const MAGIC: &'static str = "i3-ipc";
-    fn encode_msg_body<P>(&self, msg: msg::Msg, payload: P) -> Vec<u8>
-    where
-        P: AsRef<str>;
-    fn encode_msg(&self, msg: msg::Msg) -> Vec<u8>;
-    fn decode_msg(&mut self) -> io::Result<(u32, Vec<u8>)>;
 }
 
 impl I3IPC for I3Stream {
@@ -76,10 +65,16 @@ impl I3IPC for I3Stream {
     }
 }
 
-#[derive(Debug)]
-pub struct I3Stream(UnixStream);
-
 impl I3Stream {
+    pub fn conn_sub<E>(events: E) -> io::Result<Self>
+    where
+        E: AsRef<[event::Event]>,
+    {
+        let mut i3 = I3::connect()?;
+        i3.subscribe(events)?;
+        Ok(i3)
+    }
+
     pub fn subscribe<E>(&mut self, events: E) -> io::Result<reply::Success>
     where
         E: AsRef<[event::Event]>,

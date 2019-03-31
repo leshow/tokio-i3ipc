@@ -4,6 +4,20 @@ pub mod event;
 pub mod msg;
 pub mod reply;
 
+pub trait Connect {
+    type Stream: I3IPC;
+    fn connect() -> io::Result<Self::Stream>;
+}
+
+pub trait I3IPC {
+    const MAGIC: &'static str = "i3-ipc";
+    fn encode_msg_body<P>(&self, msg: msg::Msg, payload: P) -> Vec<u8>
+    where
+        P: AsRef<str>;
+    fn encode_msg(&self, msg: msg::Msg) -> Vec<u8>;
+    fn decode_msg(&mut self) -> io::Result<(u32, Vec<u8>)>;
+}
+
 #[derive(Debug)]
 pub struct MsgResponse<D> {
     pub msg_type: msg::Msg,

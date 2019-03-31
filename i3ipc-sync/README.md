@@ -7,7 +7,7 @@ Subscribing to events is easy:
 ```rust
 fn main() -> io::Result<()> {
     let mut i3 = I3::connect()?;
-    let resp = i3.subscribe(&[event::Event::Window])?;
+    let resp = i3.subscribe(&[Event::Window])?; // alternatively, let i3 = I3Stream::conn_sub(&[Event::Window])?;
     for e in i3.listen() {
         match e? { // each item is a io::Result
             Evt::Workspace(ev) => println!("workspace change event {:?}", ev),

@@ -8,3 +8,11 @@ edition = "2018"
 i3ipc-types = {version = "*", path = "../i3ipc-types" }
 serde = "1.0"
 serde_json = "1.0"
+
+[[example]]
+name = "sync_subscribe"
+path = "examples/sync_subscribe.rs"
+
+[[example]]
+name = "sync_get"
+path = "examples/sync_get.rs"

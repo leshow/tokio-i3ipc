@@ -1,14 +1,8 @@
-# I3IPC (synchronous)
-
-This crate is for the synchronous API to i3.
-
-Subscribing to events is easy:
-
-```rust
 use i3ipc_sync::{
     event::{Event, Evt},
     I3Stream,
 };
+
 use std::io;
 
 fn main() -> io::Result<()> {
@@ -27,18 +21,3 @@ fn main() -> io::Result<()> {
     }
     Ok(())
 }
-```
-
-Get all active workspaces & tree of nodes:
-
-```rust
-use i3ipc_sync::{Connect, I3};
-use std::io;
-
-fn main() -> io::Result<()> {
-    let mut i3 = I3::connect()?;
-    let workspaces = i3.get_workspaces()?;
-    println!("{:?}", workspaces);
-    Ok(())
-}
-```

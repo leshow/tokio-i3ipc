@@ -51,7 +51,7 @@ impl I3Stream {
 
     pub fn receive_msg<D: DeserializeOwned>(&mut self) -> Poll<MsgResponse<D>, io::Error> {
         let mut buf = BytesMut::with_capacity(6);
-        let l = try_ready!(self.read_buf(&mut buf));
+        let _ = try_ready!(self.read_buf(&mut buf));
         dbg!(&buf);
         let magic_str = buf.take();
         if magic_str != I3Stream::MAGIC {

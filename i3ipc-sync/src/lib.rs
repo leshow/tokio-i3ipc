@@ -19,52 +19,6 @@ impl Connect for I3 {
     }
 }
 
-impl I3IPC for I3Stream {
-    fn encode_msg(&self, msg: msg::Msg) -> Vec<u8> {
-        let mut buf = Vec::with_capacity(14);
-        buf.extend(I3Stream::MAGIC.as_bytes());
-        buf.extend(&(0_u32).to_ne_bytes());
-        buf.extend(&<u32 as From<msg::Msg>>::from(msg).to_ne_bytes());
-        buf
-    }
-
-    fn encode_msg_body<P>(&self, msg: msg::Msg, payload: P) -> Vec<u8>
-    where
-        P: AsRef<str>,
-    {
-        let payload = payload.as_ref();
-        let mut buf = Vec::with_capacity(14 + payload.len());
-        buf.extend(I3Stream::MAGIC.as_bytes());
-        buf.extend(&(payload.len() as u32).to_ne_bytes());
-        buf.extend(&<u32 as From<msg::Msg>>::from(msg).to_ne_bytes());
-        buf.extend(payload.as_bytes());
-        buf
-    }
-
-    fn decode_msg(&mut self) -> io::Result<(u32, Vec<u8>)> {
-        let mut buf = [0_u8; 6];
-        self.read_exact(&mut buf)?;
-        if &buf[..] != I3Stream::MAGIC.as_bytes() {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                format!("Expected 'i3-ipc' but received: {:?}", buf),
-            ));
-        }
-        // get payload len
-        let mut intbuf = [0_u8; 4];
-        self.read_exact(&mut intbuf)?;
-        let len = u32::from_ne_bytes(intbuf);
-        // get msg type
-        let mut msgbuf = [0_u8; 4];
-        self.read_exact(&mut msgbuf)?;
-        let msgtype = u32::from_ne_bytes(msgbuf);
-        // get payload
-        let mut payload_buf = vec![0_u8; len as usize];
-        self.read_exact(&mut payload_buf)?;
-        Ok((msgtype, payload_buf))
-    }
-}
-
 impl I3Stream {
     pub fn conn_sub<E>(events: E) -> io::Result<Self>
     where
@@ -109,37 +63,8 @@ impl I3Stream {
     }
 
     pub fn receive_evt(&mut self) -> io::Result<event::Evt> {
-        use event::{Event, Evt};
-        let (mut evt_type, payload_bytes) = self.decode_msg()?;
-        evt_type &= !(1 << 31);
-        dbg!(&evt_type);
-        let body = match evt_type.into() {
-            Event::Workspace => Evt::Workspace(Box::new(serde_json::from_slice::<
-                event::WorkspaceData,
-            >(&payload_bytes[..])?)),
-            Event::Output => Evt::Output(serde_json::from_slice::<event::OutputData>(
-                &payload_bytes[..],
-            )?),
-            Event::Mode => Evt::Mode(serde_json::from_slice::<event::ModeData>(
-                &payload_bytes[..],
-            )?),
-            Event::Window => Evt::Window(Box::new(serde_json::from_slice::<event::WindowData>(
-                &payload_bytes[..],
-            )?)),
-            Event::BarConfigUpdate => Evt::BarConfig(
-                serde_json::from_slice::<event::BarConfigData>(&payload_bytes[..])?,
-            ),
-            Event::Binding => Evt::Binding(serde_json::from_slice::<event::BindingData>(
-                &payload_bytes[..],
-            )?),
-            Event::Shutdown => Evt::Shutdown(serde_json::from_slice::<event::ShutdownData>(
-                &payload_bytes[..],
-            )?),
-            Event::Tick => Evt::Tick(serde_json::from_slice::<event::TickData>(
-                &payload_bytes[..],
-            )?),
-        };
-        Ok(body)
+        let (evt_type, payload_bytes) = self.decode_msg()?;
+        <I3Stream as I3IPC>::decode_evt(evt_type, payload_bytes)
     }
 
     pub fn send_receive<P, D>(&mut self, msg: msg::Msg, payload: P) -> io::Result<MsgResponse<D>>

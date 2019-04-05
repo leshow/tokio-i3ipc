@@ -5,7 +5,9 @@ mod codec;
 use bytes::{Buf, BufMut, Bytes, BytesMut, IntoBuf};
 use futures::{try_ready, Async, Future, Poll};
 use serde::de::DeserializeOwned;
+use tokio::prelude::*;
 use tokio_io::{AsyncRead, AsyncWrite};
+use tokio_reactor::{Handle, PollEvented};
 use tokio_uds::{ConnectFuture, UnixStream};
 
 use std::{
@@ -41,12 +43,20 @@ impl I3Stream {
         P: AsRef<str>,
     {
         let payload = payload.as_ref();
-        let mut buf = BytesMut::with_capacity(14 + payload.len());
+        let len = 14 + payload.len();
+        let mut buf = BytesMut::with_capacity(len);
         buf.put_slice(I3Stream::MAGIC.as_bytes());
         buf.put_u32_le(payload.len() as u32);
         buf.put_u32_le(msg.into());
         buf.put_slice(payload.as_bytes());
-        self.write_buf(&mut buf.into_buf())
+        let mut n = 0;
+        let mut buf = buf.into_buf();
+        loop {
+            n += try_ready!(self.write_buf(&mut buf));
+            if n == len {
+                return Ok(Async::Ready(len));
+            }
+        }
     }
 
     pub fn receive_msg<D: DeserializeOwned>(&mut self) -> Poll<MsgResponse<D>, io::Error> {

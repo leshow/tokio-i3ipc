@@ -182,34 +182,3 @@ impl<'a> Iterator for I3Iter<'a> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::io;
-    #[test]
-    fn test_subscribe() -> io::Result<()> {
-        let mut i3 = I3::connect()?;
-        let resp = i3.subscribe(&[event::Event::Window])?;
-        for e in i3.listen() {
-            let e = e?;
-            println!("{:?}", e);
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn test_get_workspaces() -> io::Result<()> {
-        let mut i3 = I3::connect()?;
-        let workspaces = i3.get_tree()?;
-        println!("{:?}", workspaces);
-        Ok(())
-    }
-
-    #[test]
-    fn test_get_outputs() -> io::Result<()> {
-        let mut i3 = I3::connect()?;
-        let outputs = i3.get_outputs()?;
-        println!("{:?}", outputs);
-        Ok(())
-    }
-}

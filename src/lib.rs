@@ -1,6 +1,7 @@
 // re-export i3ipc-types so users only have to import 1 thing
 pub use i3ipc_types::*;
 mod codec;
+pub use codec::*;
 
 use bytes::{Buf, BufMut, Bytes, BytesMut, IntoBuf};
 use futures::{try_ready, Async, Future, Poll};

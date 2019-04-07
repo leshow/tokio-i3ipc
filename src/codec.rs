@@ -1,25 +1,19 @@
 use byteorder::{ByteOrder, LittleEndian};
-use bytes::{Buf, BufMut, Bytes, BytesMut, IntoBuf};
+use bytes::{BufMut, BytesMut};
 use futures::prelude::*;
-use futures::sync::mpsc::{self, Receiver, Sender};
+use futures::sync::mpsc::Sender;
 use futures::Stream;
 use tokio::prelude::*;
-use tokio_codec::{Decoder, Encoder, FramedRead};
+use tokio_codec::{Decoder, FramedRead};
 use tokio_uds::UnixStream;
 
 use i3ipc_types::{
     event::{self, Event},
     msg::Msg,
-    reply, socket_path, I3IPC, MAGIC,
+    socket_path, I3IPC, MAGIC,
 };
 
-use std::{
-    env,
-    io::{self, Read, Write},
-    os::unix::net,
-    path::{Path, PathBuf},
-    process::Command,
-};
+use std::io;
 
 fn decode_evt(evt_type: u32, payload: Vec<u8>) -> io::Result<event::Evt> {
     use event::{Event, Evt};
@@ -74,7 +68,7 @@ impl Decoder for EvtCodec {
     }
 }
 
-fn subscribe(
+pub fn subscribe(
     rt: tokio::runtime::current_thread::Handle,
     tx: Sender<event::Evt>,
     events: Vec<Event>,
@@ -128,7 +122,12 @@ fn subscribe(
 
 #[cfg(test)]
 mod test {
-    use super::*;
+
+    use futures::{future, stream::Stream, sync::mpsc};
+    use i3ipc_types::event::{self, Event};
+    use std::io;
+
+    use super::subscribe;
     #[test]
     fn test_sub() -> io::Result<()> {
         let mut rt =

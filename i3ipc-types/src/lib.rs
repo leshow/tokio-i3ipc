@@ -35,33 +35,8 @@ pub trait I3IPC: io::Read + io::Write {
         buf
     }
 
-    fn decode_evt(evt_type: u32, payload: Vec<u8>) -> io::Result<event::Evt> {
-        use event::{Event, Evt};
-        let evt_type = evt_type & !(1 << 31);
-        dbg!(&evt_type);
-        let body = match evt_type.into() {
-            Event::Workspace => Evt::Workspace(Box::new(serde_json::from_slice::<
-                event::WorkspaceData,
-            >(&payload[..])?)),
-            Event::Output => {
-                Evt::Output(serde_json::from_slice::<event::OutputData>(&payload[..])?)
-            }
-            Event::Mode => Evt::Mode(serde_json::from_slice::<event::ModeData>(&payload[..])?),
-            Event::Window => Evt::Window(Box::new(serde_json::from_slice::<event::WindowData>(
-                &payload[..],
-            )?)),
-            Event::BarConfigUpdate => Evt::BarConfig(
-                serde_json::from_slice::<event::BarConfigData>(&payload[..])?,
-            ),
-            Event::Binding => {
-                Evt::Binding(serde_json::from_slice::<event::BindingData>(&payload[..])?)
-            }
-            Event::Shutdown => {
-                Evt::Shutdown(serde_json::from_slice::<event::ShutdownData>(&payload[..])?)
-            }
-            Event::Tick => Evt::Tick(serde_json::from_slice::<event::TickData>(&payload[..])?),
-        };
-        Ok(body)
+    fn decode_event(evt_type: u32, payload: Vec<u8>) -> io::Result<event::Event> {
+        decode_event(evt_type, payload)
     }
 
     fn decode_msg(&mut self) -> io::Result<(u32, Vec<u8>)> {
@@ -109,4 +84,33 @@ pub fn socket_path() -> io::Result<String> {
             "Unable to get i3 socket path",
         ))
     }
+}
+
+pub fn decode_event(evt_type: u32, payload: Vec<u8>) -> io::Result<event::Event> {
+    use event::{Event, Subscribe};
+    let evt_type = evt_type & !(1 << 31);
+    dbg!(&evt_type);
+    let body = match evt_type.into() {
+        Subscribe::Workspace => Event::Workspace(Box::new(serde_json::from_slice::<
+            event::WorkspaceData,
+        >(&payload[..])?)),
+        Subscribe::Output => {
+            Event::Output(serde_json::from_slice::<event::OutputData>(&payload[..])?)
+        }
+        Subscribe::Mode => Event::Mode(serde_json::from_slice::<event::ModeData>(&payload[..])?),
+        Subscribe::Window => Event::Window(Box::new(serde_json::from_slice::<event::WindowData>(
+            &payload[..],
+        )?)),
+        Subscribe::BarConfigUpdate => Event::BarConfig(serde_json::from_slice::<
+            event::BarConfigData,
+        >(&payload[..])?),
+        Subscribe::Binding => {
+            Event::Binding(serde_json::from_slice::<event::BindingData>(&payload[..])?)
+        }
+        Subscribe::Shutdown => {
+            Event::Shutdown(serde_json::from_slice::<event::ShutdownData>(&payload[..])?)
+        }
+        Subscribe::Tick => Event::Tick(serde_json::from_slice::<event::TickData>(&payload[..])?),
+    };
+    Ok(body)
 }

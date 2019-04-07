@@ -7,7 +7,8 @@ use tokio_codec::{Decoder, FramedRead};
 use tokio_uds::UnixStream;
 
 use i3ipc_types::{
-    event::{self, Event},
+    decode_event,
+    event::{self, Subscribe},
     msg::Msg,
     reply, socket_path, I3IPC, MAGIC,
 };
@@ -16,35 +17,10 @@ use crate::{AsyncConnect, AsyncI3, I3Msg};
 
 use std::{io, marker::PhantomData};
 
-fn decode_evt(evt_type: u32, payload: Vec<u8>) -> io::Result<event::Evt> {
-    use event::{Event, Evt};
-    let evt_type = evt_type & !(1 << 31);
-    dbg!(&evt_type);
-    let body = match evt_type.into() {
-        Event::Workspace => Evt::Workspace(Box::new(
-            serde_json::from_slice::<event::WorkspaceData>(&payload[..])?,
-        )),
-        Event::Output => Evt::Output(serde_json::from_slice::<event::OutputData>(&payload[..])?),
-        Event::Mode => Evt::Mode(serde_json::from_slice::<event::ModeData>(&payload[..])?),
-        Event::Window => Evt::Window(Box::new(serde_json::from_slice::<event::WindowData>(
-            &payload[..],
-        )?)),
-        Event::BarConfigUpdate => Evt::BarConfig(serde_json::from_slice::<event::BarConfigData>(
-            &payload[..],
-        )?),
-        Event::Binding => Evt::Binding(serde_json::from_slice::<event::BindingData>(&payload[..])?),
-        Event::Shutdown => {
-            Evt::Shutdown(serde_json::from_slice::<event::ShutdownData>(&payload[..])?)
-        }
-        Event::Tick => Evt::Tick(serde_json::from_slice::<event::TickData>(&payload[..])?),
-    };
-    Ok(body)
-}
-
 pub struct EvtCodec;
 
 impl Decoder for EvtCodec {
-    type Item = event::Evt;
+    type Item = event::Event;
     type Error = io::Error;
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, io::Error> {
         if src.len() > 14 {
@@ -59,7 +35,7 @@ impl Decoder for EvtCodec {
             if src.len() < 14 + payload_len {
                 Ok(None)
             } else {
-                let evt = decode_evt(evt_type, src[14..].as_mut().to_vec())?;
+                let evt = decode_event(evt_type, src[14..].as_mut().to_vec())?;
                 src.clear();
                 Ok(Some(evt))
             }
@@ -109,8 +85,8 @@ pub fn get_workspaces(tx: Sender<reply::Workspaces>) -> io::Result<()> {
 
 pub fn subscribe(
     rt: tokio::runtime::current_thread::Handle,
-    tx: Sender<event::Evt>,
-    events: Vec<Event>,
+    tx: Sender<event::Event>,
+    events: Vec<Subscribe>,
 ) -> io::Result<()> {
     let fut = UnixStream::connect(socket_path()?)
         .and_then(move |stream| {
@@ -164,7 +140,7 @@ pub fn subscribe(
 mod test {
 
     use futures::{future, stream::Stream, sync::mpsc};
-    use i3ipc_types::event::{self, Event};
+    use i3ipc_types::event::{self, Subscribe};
     use std::io;
 
     use super::{get_workspaces, subscribe};
@@ -173,8 +149,8 @@ mod test {
         let mut rt =
             tokio::runtime::current_thread::Runtime::new().expect("Failed building runtime");
         let (tx, rx) = mpsc::channel(5);
-        subscribe(rt.handle(), tx, vec![Event::Window])?;
-        let fut = rx.for_each(|e: event::Evt| {
+        subscribe(rt.handle(), tx, vec![Subscribe::Window])?;
+        let fut = rx.for_each(|e: event::Event| {
             println!("received");
             println!("{:#?}", e);
             future::ok(())

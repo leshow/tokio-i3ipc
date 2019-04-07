@@ -4,7 +4,7 @@ use crate::reply;
 
 #[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
 #[serde(rename_all = "snake_case")]
-pub enum Event {
+pub enum Subscribe {
     Workspace,
     Output,
     Mode,
@@ -16,39 +16,39 @@ pub enum Event {
     Tick,
 }
 
-impl From<u32> for Event {
+impl From<u32> for Subscribe {
     fn from(num: u32) -> Self {
         match num {
-            0 => Event::Workspace,
-            1 => Event::Output,
-            2 => Event::Mode,
-            3 => Event::Window,
-            4 => Event::BarConfigUpdate,
-            5 => Event::Binding,
-            6 => Event::Shutdown,
-            7 => Event::Tick,
+            0 => Subscribe::Workspace,
+            1 => Subscribe::Output,
+            2 => Subscribe::Mode,
+            3 => Subscribe::Window,
+            4 => Subscribe::BarConfigUpdate,
+            5 => Subscribe::Binding,
+            6 => Subscribe::Shutdown,
+            7 => Subscribe::Tick,
             _ => panic!("Unknown event found"),
         }
     }
 }
 
-impl From<Event> for u32 {
-    fn from(evt: Event) -> Self {
+impl From<Subscribe> for u32 {
+    fn from(evt: Subscribe) -> Self {
         match evt {
-            Event::Workspace => 0,
-            Event::Output => 1,
-            Event::Mode => 2,
-            Event::Window => 3,
-            Event::BarConfigUpdate => 4,
-            Event::Binding => 5,
-            Event::Shutdown => 6,
-            Event::Tick => 7,
+            Subscribe::Workspace => 0,
+            Subscribe::Output => 1,
+            Subscribe::Mode => 2,
+            Subscribe::Window => 3,
+            Subscribe::BarConfigUpdate => 4,
+            Subscribe::Binding => 5,
+            Subscribe::Shutdown => 6,
+            Subscribe::Tick => 7,
         }
     }
 }
 
 #[derive(Debug)]
-pub enum Evt {
+pub enum Event {
     Workspace(Box<WorkspaceData>),
     Output(OutputData),
     Mode(ModeData),

@@ -1,8 +1,10 @@
 # i3ipc-types
 
-This crate includes all the types for interacting with [i3ipc](https://i3wm.org/docs/ipc.html).
+This crate includes all the types for interacting with [i3ipc](https://i3wm.org/docs/ipc.html), along with some undocumented properties I found by browsing i3's source code.
 
-I wanted to have a single crate other packages could depend on for the types used in i3 so that no one had to re-implement the same (tedious) work over again.
+This crate includes the definitions for all i3 ipc message responses, event types, and serialize/deserialize implementations using `serde`. Additionally, I've included traits with default implementations for encoding and decoding for speaking i3's ipc protocol, so long as the type has implemented `io::Read` and `io::Write`.
+
+My goal is to locate all of the type definitions for i3's IPC implementation here, so no one ever has to go through the tedium again. If anything is missing or not working, please fill out an issue or submit a PR, I'm happy to fix things or improve the library in any way I can.
 
 ## Advantages over i3ipc-rs
 

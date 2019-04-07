@@ -3,7 +3,7 @@ pub use i3ipc_types::*;
 mod codec;
 pub use codec::*;
 
-use bytes::{Buf, BufMut, Bytes, BytesMut, IntoBuf};
+use bytes::{Buf, BufMut, ByteOrder, Bytes, BytesMut, IntoBuf, LittleEndian};
 use futures::{try_ready, Async, Future, Poll};
 use serde::de::DeserializeOwned;
 use tokio::prelude::*;
@@ -13,23 +13,64 @@ use tokio_uds::{ConnectFuture, UnixStream};
 
 use std::{
     io::{self, Read, Write},
-    os::unix::net,
+    marker::PhantomData,
 };
 
 #[derive(Debug)]
-pub struct I3Connect(ConnectFuture);
+pub struct AsyncI3(ConnectFuture);
 
-impl I3Connect {
-    pub fn new() -> io::Result<Self> {
-        Ok(I3Connect(UnixStream::connect(socket_path()?)))
+trait AsyncConnect {
+    type Stream: AsyncI3IPC;
+    fn new() -> io::Result<Self>
+    where
+        Self: Sized;
+}
+
+trait AsyncI3IPC: AsyncRead + AsyncWrite + I3IPC {}
+impl AsyncI3IPC for I3Stream {}
+impl AsyncI3IPC for UnixStream {}
+
+impl AsyncConnect for AsyncI3 {
+    type Stream = UnixStream;
+    fn new() -> io::Result<Self> {
+        Ok(AsyncI3(UnixStream::connect(socket_path()?)))
     }
-    pub fn connect(&mut self) -> Poll<I3Stream, io::Error> {
+}
+
+impl Future for AsyncI3 {
+    type Item = UnixStream;
+    type Error = io::Error;
+    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
         let stream = try_ready!(self.0.poll());
-        Ok(Async::Ready(I3Stream(stream)))
+        Ok(Async::Ready(stream))
     }
-    pub fn from_stream(handle: &tokio::reactor::Handle) -> io::Result<I3Stream> {
-        let std_stream = net::UnixStream::connect(socket_path()?)?;
-        Ok(I3Stream(UnixStream::from_std(std_stream, handle)?))
+}
+
+pub struct I3Msg<D> {
+    stream: UnixStream,
+    _marker: PhantomData<D>,
+}
+
+impl<D: DeserializeOwned> Future for I3Msg<D> {
+    type Item = MsgResponse<D>;
+    type Error = io::Error;
+    fn poll(&mut self) -> Poll<Self::Item, io::Error> {
+        let mut initial = [0_u8; 14];
+        self.stream.read_exact(&mut initial[..])?;
+        if &initial[0..6] != MAGIC.as_bytes() {
+            panic!("Magic str not received");
+        }
+        let payload_len = LittleEndian::read_u32(&initial[6..10]) as usize;
+        dbg!(payload_len);
+        let msg_type = LittleEndian::read_u32(&initial[10..14]);
+        dbg!(msg_type);
+        let mut payload = vec![0_u8; payload_len];
+        self.stream.read_exact(&mut payload)?;
+
+        Ok(Async::Ready(MsgResponse {
+            msg_type: msg_type.into(),
+            body: serde_json::from_slice(&payload)?,
+        }))
     }
 }
 

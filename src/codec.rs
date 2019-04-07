@@ -10,8 +10,10 @@ use tokio_uds::UnixStream;
 use i3ipc_types::{
     event::{self, Event},
     msg::Msg,
-    socket_path, I3IPC, MAGIC,
+    reply, socket_path, I3IPC, MAGIC,
 };
+
+use crate::{AsyncConnect, AsyncI3};
 
 use std::io;
 
@@ -68,6 +70,36 @@ impl Decoder for EvtCodec {
     }
 }
 
+pub fn get_workspaces(tx: Sender<reply::Workspaces>) -> io::Result<()> {
+    let fut = AsyncI3::new()?;
+    tokio::run(
+        fut.and_then(|stream| {
+            let buf = stream.encode_msg(Msg::Workspaces);
+            dbg!(&buf[..]);
+            tokio::io::write_all(stream, buf)
+        })
+        .and_then(|(stream, _buf)| tokio::io::read_exact(stream, [0_u8; 14]))
+        .and_then(|(stream, initial)| {
+            if &initial[0..6] != MAGIC.as_bytes() {
+                panic!("Magic str not received");
+            }
+            let payload_len = LittleEndian::read_u32(&initial[6..10]) as usize;
+            dbg!(payload_len);
+            let msg_type: u32 = LittleEndian::read_u32(&initial[10..14]);
+            dbg!(msg_type);
+            tokio::io::read_exact(stream, vec![0_u8; payload_len])
+        })
+        .and_then(|(stream, buf)| {
+            let reply = serde_json::from_slice::<reply::Workspaces>(&buf[..]).unwrap();
+            dbg!(&reply);
+            future::ok(stream)
+        })
+        .map(|_| ())
+        .map_err(|e| println!("{}", e)),
+    );
+    Ok(())
+}
+
 pub fn subscribe(
     rt: tokio::runtime::current_thread::Handle,
     tx: Sender<event::Evt>,
@@ -108,7 +140,7 @@ pub fn subscribe(
                     let tx = tx.clone();
                     tx.send(evt)
                         .map(|_| ())
-                        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+                        .map_err(|e| io::Error::new(io::ErrorKind::BrokenPipe, e))
                 })
                 .map_err(|err| println!("{}", err));
             tokio::spawn(sender);
@@ -128,7 +160,7 @@ mod test {
     use i3ipc_types::event::{self, Event};
     use std::io;
 
-    use super::subscribe;
+    use super::{get_workspaces, subscribe};
     #[test]
     fn test_sub() -> io::Result<()> {
         let mut rt =
@@ -142,6 +174,13 @@ mod test {
         });
         rt.spawn(fut);
         rt.run().expect("failed runtime");
+        Ok(())
+    }
+
+    #[test]
+    fn test_workspaces() -> io::Result<()> {
+        let (tx, rx) = mpsc::channel(5);
+        get_workspaces(tx)?;
         Ok(())
     }
 

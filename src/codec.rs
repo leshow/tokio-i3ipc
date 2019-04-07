@@ -106,8 +106,9 @@ pub fn subscribe(
             let sender = framed
                 .for_each(move |evt| {
                     let tx = tx.clone();
-                    tx.send(evt).wait();
-                    Ok(())
+                    tx.send(evt)
+                        .map(|_| ())
+                        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
                 })
                 .map_err(|err| println!("{}", err));
             tokio::spawn(sender);

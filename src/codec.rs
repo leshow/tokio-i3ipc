@@ -1,5 +1,4 @@
-use byteorder::{ByteOrder, LittleEndian};
-use bytes::{BufMut, BytesMut};
+use bytes::{BufMut, ByteOrder, BytesMut, LittleEndian};
 use futures::prelude::*;
 use futures::sync::mpsc::Sender;
 use futures::Stream;
@@ -13,9 +12,9 @@ use i3ipc_types::{
     reply, socket_path, I3IPC, MAGIC,
 };
 
-use crate::{AsyncConnect, AsyncI3};
+use crate::{AsyncConnect, AsyncI3, I3Msg};
 
-use std::io;
+use std::{io, marker::PhantomData};
 
 fn decode_evt(evt_type: u32, payload: Vec<u8>) -> io::Result<event::Evt> {
     use event::{Event, Evt};
@@ -78,22 +77,30 @@ pub fn get_workspaces(tx: Sender<reply::Workspaces>) -> io::Result<()> {
             dbg!(&buf[..]);
             tokio::io::write_all(stream, buf)
         })
-        .and_then(|(stream, _buf)| tokio::io::read_exact(stream, [0_u8; 14]))
-        .and_then(|(stream, initial)| {
-            if &initial[0..6] != MAGIC.as_bytes() {
-                panic!("Magic str not received");
-            }
-            let payload_len = LittleEndian::read_u32(&initial[6..10]) as usize;
-            dbg!(payload_len);
-            let msg_type: u32 = LittleEndian::read_u32(&initial[10..14]);
-            dbg!(msg_type);
-            tokio::io::read_exact(stream, vec![0_u8; payload_len])
+        .and_then(|(stream, _buf)| I3Msg::<reply::Workspaces> {
+            stream,
+            _marker: PhantomData,
         })
-        .and_then(|(stream, buf)| {
-            let reply = serde_json::from_slice::<reply::Workspaces>(&buf[..]).unwrap();
-            dbg!(&reply);
-            future::ok(stream)
+        .and_then(|resp| {
+            dbg!(resp);
+            Ok(())
         })
+        // .and_then(|(stream, _buf)| tokio::io::read_exact(stream, [0_u8; 14]))
+        // .and_then(|(stream, initial)| {
+        //     if &initial[0..6] != MAGIC.as_bytes() {
+        //         panic!("Magic str not received");
+        //     }
+        //     let payload_len = LittleEndian::read_u32(&initial[6..10]) as usize;
+        //     dbg!(payload_len);
+        //     let msg_type: u32 = LittleEndian::read_u32(&initial[10..14]);
+        //     dbg!(msg_type);
+        //     tokio::io::read_exact(stream, vec![0_u8; payload_len])
+        // })
+        // .and_then(|(stream, buf)| {
+        //     let reply = serde_json::from_slice::<reply::Workspaces>(&buf[..]).unwrap();
+        //     dbg!(&reply);
+        //     future::ok(stream)
+        // })
         .map(|_| ())
         .map_err(|e| println!("{}", e)),
     );

@@ -60,14 +60,12 @@ impl Decoder for EvtCodec {
                 ));
             }
             let payload_len = LittleEndian::read_u32(&src[6..10]) as usize;
-            let mut evt_type = LittleEndian::read_u32(&src[10..14]);
-            dbg!(payload_len);
-            evt_type &= !(1 << 31);
+            let evt_type = LittleEndian::read_u32(&src[10..14]);
             if src.len() < 14 + payload_len {
                 Ok(None)
             } else {
                 let evt = decode_evt(evt_type, src[14..].as_mut().to_vec())?;
-                dbg!(&evt);
+                src.clear();
                 Ok(Some(evt))
             }
         } else {
@@ -76,17 +74,19 @@ impl Decoder for EvtCodec {
     }
 }
 
-fn subscribe(tx: Sender<event::Evt>, events: Vec<Event>) -> io::Result<()> {
+fn subscribe(
+    rt: tokio::runtime::current_thread::Handle,
+    tx: Sender<event::Evt>,
+    events: Vec<Event>,
+) -> io::Result<()> {
     let fut = UnixStream::connect(socket_path()?)
         .and_then(move |stream| {
             let payload = serde_json::to_string(&events[..]).unwrap();
             let mut buf = BytesMut::with_capacity(14 + payload.len());
             buf.put_slice(MAGIC.as_bytes());
             buf.put_u32_le(payload.len() as u32);
-            buf.put_u32_le(2);
+            buf.put_u32_le(Msg::Subscribe.into());
             buf.put_slice(payload.as_bytes());
-            println!("writing {:#?}", buf);
-
             tokio::io::write_all(stream, buf)
         })
         .and_then(|(stream, _buf)| {
@@ -101,46 +101,28 @@ fn subscribe(tx: Sender<event::Evt>, events: Vec<Event>) -> io::Result<()> {
                 panic!("Magic str not received");
             }
             let payload_len: u32 = LittleEndian::read_u32(&initial[6..10]);
-            dbg!(payload_len);
+            dbg!(payload_len); // 16
             let msg_type: u32 = LittleEndian::read_u32(&initial[10..14]);
-            dbg!(msg_type);
+            dbg!(msg_type); // 2
             dbg!(String::from_utf8(initial[14..].to_vec()).unwrap());
             future::ok(stream)
         })
         .and_then(move |stream| {
             let framed = FramedRead::new(stream, EvtCodec);
-            framed.for_each(move |evt| {
-                let tx = tx.clone();
-                tx.send(evt).wait();
-                Ok(())
-            })
-            // let buf = [0; 14];
-            // tokio::io::read_exact(stream, buf).and_then(|(stream, initial)| {
-            //     if &initial[0..6] != MAGIC.as_bytes() {
-            //         panic!("Magic str not received");
-            //     }
-            //     let payload_len = LittleEndian::read_u32(&initial[6..10]) as usize;
-            //     dbg!(payload_len);
-            //     let evt_type = LittleEndian::read_u32(&initial[10..14]);
-
-            //     let buf = vec![0; payload_len];
-            //     tokio::io::read_exact(stream, buf).and_then(move |(_stream, buf)| {
-            //         let s = String::from_utf8(buf.to_vec()).unwrap();
-            //         println!("{:?}", s);
-            //         dbg!(evt_type);
-            //         let out = decode_evt(evt_type, buf).unwrap();
-            //         dbg!(out);
-            //         future::ok(())
-            //     })
-            // })
+            let sender = framed
+                .for_each(move |evt| {
+                    let tx = tx.clone();
+                    tx.send(evt).wait();
+                    Ok(())
+                })
+                .map_err(|err| println!("{}", err));
+            tokio::spawn(sender);
+            Ok(())
         })
-        // .inspect(|node| {
-        //     println!("node: {:?}", node);
-        // })
         .map(|_| ())
         .map_err(|e| eprintln!("{:?}", e));
 
-    tokio::run(fut);
+    rt.spawn(fut);
     Ok(())
 }
 
@@ -149,15 +131,36 @@ mod test {
     use super::*;
     #[test]
     fn test_sub() -> io::Result<()> {
+        let mut rt =
+            tokio::runtime::current_thread::Runtime::new().expect("Failed building runtime");
         let (tx, rx) = mpsc::channel(5);
-        subscribe(tx, vec![Event::Window])?;
+        subscribe(rt.handle(), tx, vec![Event::Window])?;
         let fut = rx.for_each(|e: event::Evt| {
             println!("received");
             println!("{:#?}", e);
             future::ok(())
         });
-        tokio::run(fut);
+        rt.spawn(fut);
+        rt.run().expect("failed runtime");
         Ok(())
     }
 
 }
+// let buf = [0; 14];
+// tokio::io::read_exact(stream, buf).and_then(|(stream, initial)| {
+//     if &initial[0..6] != MAGIC.as_bytes() {
+//         panic!("Magic str not received");
+//     }
+//     let payload_len = LittleEndian::read_u32(&initial[6..10]) as usize;
+//     dbg!(payload_len);
+//     let evt_type = LittleEndian::read_u32(&initial[10..14]);
+//     let buf = vec![0; payload_len];
+//     tokio::io::read_exact(stream, buf).and_then(move |(_stream, buf)| {
+//         let s = String::from_utf8(buf.to_vec()).unwrap();
+//         println!("{:?}", s);
+//         dbg!(evt_type);
+//         let out = decode_evt(evt_type, buf).unwrap();
+//         dbg!(out);
+//         future::ok(())
+//     })
+// })

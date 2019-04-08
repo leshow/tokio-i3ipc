@@ -54,17 +54,12 @@ impl I3Stream {
 
     pub fn receive_msg<D: DeserializeOwned>(&mut self) -> io::Result<MsgResponse<D>> {
         let (msg_type, payload_bytes) = self.decode_msg()?;
-        dbg!(&msg_type);
-        dbg!(&String::from_utf8(payload_bytes.clone()).unwrap());
-        Ok(MsgResponse {
-            msg_type: msg_type.into(),
-            body: serde_json::from_slice(&payload_bytes[..])?,
-        })
+        MsgResponse::new(msg_type, payload_bytes)
     }
 
     pub fn receive_event(&mut self) -> io::Result<event::Event> {
         let (evt_type, payload_bytes) = self.decode_msg()?;
-        <I3Stream as I3IPC>::decode_event(evt_type, payload_bytes)
+        decode_event(evt_type, payload_bytes)
     }
 
     pub fn send_receive<P, D>(&mut self, msg: msg::Msg, payload: P) -> io::Result<MsgResponse<D>>
@@ -181,4 +176,3 @@ impl<'a> Iterator for I3Iter<'a> {
         Some(self.stream.receive_event())
     }
 }
-

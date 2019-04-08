@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{de::DeserializeOwned, Serialize};
 
 use std::{env, io, process::Command};
 
@@ -86,6 +86,15 @@ impl<T: io::Read + io::Write> I3IPC for T {}
 pub struct MsgResponse<D> {
     pub msg_type: msg::Msg,
     pub body: D,
+}
+
+impl<D: DeserializeOwned> MsgResponse<D> {
+    pub fn new(msg_type: u32, buf: Vec<u8>) -> io::Result<Self> {
+        Ok(MsgResponse {
+            msg_type: msg_type.into(),
+            body: serde_json::from_slice(&buf[..])?,
+        })
+    }
 }
 
 pub fn socket_path() -> io::Result<String> {

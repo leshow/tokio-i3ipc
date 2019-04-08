@@ -2,6 +2,7 @@ use bytes::{BufMut, ByteOrder, BytesMut, LittleEndian};
 use futures::prelude::*;
 use futures::sync::mpsc::Sender;
 use futures::Stream;
+use serde::de::DeserializeOwned;
 use tokio::prelude::*;
 use tokio_codec::{Decoder, FramedRead};
 use tokio_uds::UnixStream;
@@ -10,10 +11,10 @@ use i3ipc_types::{
     decode_event,
     event::{self, Subscribe},
     msg::Msg,
-    reply, socket_path, I3IPC, MAGIC,
+    reply, socket_path, MsgResponse, I3IPC, MAGIC,
 };
 
-use crate::{AsyncConnect, AsyncI3, I3Msg};
+use crate::{AsyncConnect, I3Msg, I3};
 
 use std::{io, marker::PhantomData};
 
@@ -45,8 +46,27 @@ impl Decoder for EvtCodec {
     }
 }
 
+pub fn run_command<S>(command: S) -> impl Future<Item = Vec<reply::Success>, Error = io::Error>
+where
+    S: AsRef<str>,
+{
+    I3::new()
+        .unwrap()
+        .and_then(|stream| {
+            let buf = stream.encode_msg_body(Msg::RunCommand, command);
+            tokio::io::write_all(stream, buf)
+        })
+        .and_then(|(stream, _buf)| {
+            decode_response(stream, |msg_ty, buf| {
+                let msg: MsgResponse<Vec<reply::Success>> = MsgResponse::new(msg_ty, buf).unwrap();
+                msg
+            })
+            .map(|(_stream, msg)| msg.body)
+        })
+}
+
 pub fn get_workspaces(tx: Sender<reply::Workspaces>) -> io::Result<()> {
-    let fut = AsyncI3::new()?;
+    let fut = I3::new()?;
     tokio::run(
         fut.and_then(|stream| {
             let buf = stream.encode_msg(Msg::Workspaces);
@@ -61,22 +81,6 @@ pub fn get_workspaces(tx: Sender<reply::Workspaces>) -> io::Result<()> {
             dbg!(resp);
             Ok(())
         })
-        // .and_then(|(stream, _buf)| tokio::io::read_exact(stream, [0_u8; 14]))
-        // .and_then(|(stream, initial)| {
-        //     if &initial[0..6] != MAGIC.as_bytes() {
-        //         panic!("Magic str not received");
-        //     }
-        //     let payload_len = LittleEndian::read_u32(&initial[6..10]) as usize;
-        //     dbg!(payload_len);
-        //     let msg_type: u32 = LittleEndian::read_u32(&initial[10..14]);
-        //     dbg!(msg_type);
-        //     tokio::io::read_exact(stream, vec![0_u8; payload_len])
-        // })
-        // .and_then(|(stream, buf)| {
-        //     let reply = serde_json::from_slice::<reply::Workspaces>(&buf[..]).unwrap();
-        //     dbg!(&reply);
-        //     future::ok(stream)
-        // })
         .map(|_| ())
         .map_err(|e| println!("{}", e)),
     );
@@ -95,12 +99,13 @@ pub fn subscribe(
         })
         .and_then(|(stream, _buf)| {
             decode_response(stream, |msg_type: u32, buf: Vec<u8>| {
-                let s = String::from_utf8(buf.to_vec()).unwrap();
-                println!("{:?}", s);
                 dbg!(msg_type);
+                let msg: MsgResponse<reply::Success> = MsgResponse::new(msg_type, buf).unwrap();
+                dbg!(&msg);
+                msg
             })
         })
-        .and_then(move |stream| {
+        .and_then(move |(stream, _)| {
             let framed = FramedRead::new(stream, EvtCodec);
             let sender = framed
                 .for_each(move |evt| {
@@ -120,12 +125,13 @@ pub fn subscribe(
     Ok(())
 }
 
-pub fn decode_response<F>(
+pub fn decode_response<F, D>(
     stream: UnixStream,
     f: F,
-) -> impl Future<Item = UnixStream, Error = io::Error>
+) -> impl Future<Item = (UnixStream, MsgResponse<D>), Error = io::Error>
 where
-    F: Fn(u32, Vec<u8>),
+    F: Fn(u32, Vec<u8>) -> MsgResponse<D>,
+    D: DeserializeOwned,
 {
     let buf = [0; 14];
     tokio::io::read_exact(stream, buf).and_then(|(stream, initial)| {
@@ -137,10 +143,8 @@ where
         let evt_type = LittleEndian::read_u32(&initial[10..14]);
 
         let buf = vec![0; payload_len];
-        tokio::io::read_exact(stream, buf).and_then(move |(stream, buf)| {
-            f(evt_type, buf);
-            future::ok(stream)
-        })
+        tokio::io::read_exact(stream, buf)
+            .and_then(move |(stream, buf)| future::ok((stream, f(evt_type, buf))))
     })
 }
 

@@ -13,7 +13,7 @@ use tokio_uds::{ConnectFuture, UnixStream};
 use std::{io, marker::PhantomData};
 
 #[derive(Debug)]
-pub struct AsyncI3(ConnectFuture);
+pub struct I3(ConnectFuture);
 
 trait AsyncConnect {
     type Stream: AsyncI3IPC;
@@ -22,18 +22,19 @@ trait AsyncConnect {
         Self: Sized;
 }
 
+// unused so far
 trait AsyncI3IPC: AsyncRead + AsyncWrite + I3IPC {}
 // add default impls to UnixStream
 impl AsyncI3IPC for UnixStream {}
 
-impl AsyncConnect for AsyncI3 {
+impl AsyncConnect for I3 {
     type Stream = UnixStream;
     fn new() -> io::Result<Self> {
-        Ok(AsyncI3(UnixStream::connect(socket_path()?)))
+        Ok(I3(UnixStream::connect(socket_path()?)))
     }
 }
 
-impl Future for AsyncI3 {
+impl Future for I3 {
     type Item = UnixStream;
     type Error = io::Error;
     fn poll(&mut self) -> Poll<Self::Item, Self::Error> {

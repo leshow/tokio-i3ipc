@@ -1,4 +1,4 @@
-use i3ipc_sync::{Connect, I3};
+use i3_ipc::{Connect, I3};
 
 use std::io;
 

@@ -22,7 +22,7 @@ impl Connect for I3 {
 impl I3Stream {
     pub fn conn_sub<E>(events: E) -> io::Result<Self>
     where
-        E: AsRef<[event::Event]>,
+        E: AsRef<[event::Subscribe]>,
     {
         let mut i3 = I3::connect()?;
         i3.subscribe(events)?;
@@ -31,7 +31,7 @@ impl I3Stream {
 
     pub fn subscribe<E>(&mut self, events: E) -> io::Result<reply::Success>
     where
-        E: AsRef<[event::Event]>,
+        E: AsRef<[event::Subscribe]>,
     {
         let sub_json = serde_json::to_string(events.as_ref())?;
         self.send_msg(msg::Msg::Subscribe, &sub_json)?;
@@ -62,9 +62,9 @@ impl I3Stream {
         })
     }
 
-    pub fn receive_evt(&mut self) -> io::Result<event::Evt> {
+    pub fn receive_event(&mut self) -> io::Result<event::Event> {
         let (evt_type, payload_bytes) = self.decode_msg()?;
-        <I3Stream as I3IPC>::decode_evt(evt_type, payload_bytes)
+        <I3Stream as I3IPC>::decode_event(evt_type, payload_bytes)
     }
 
     pub fn send_receive<P, D>(&mut self, msg: msg::Msg, payload: P) -> io::Result<MsgResponse<D>>
@@ -175,10 +175,10 @@ pub struct I3Iter<'a> {
 }
 
 impl<'a> Iterator for I3Iter<'a> {
-    type Item = io::Result<event::Evt>;
+    type Item = io::Result<event::Event>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        Some(self.stream.receive_evt())
+        Some(self.stream.receive_event())
     }
 }
 

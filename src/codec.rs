@@ -90,7 +90,7 @@ pub fn subscribe(
 ) -> io::Result<()> {
     let fut = UnixStream::connect(socket_path()?)
         .and_then(move |stream| {
-            let buf = subscribe_payload(events);
+            let buf = stream.encode_msg_json(Msg::Subscribe, events).unwrap();
             tokio::io::write_all(stream, buf)
         })
         .and_then(|(stream, _buf)| {
@@ -120,18 +120,10 @@ pub fn subscribe(
     Ok(())
 }
 
-fn subscribe_payload(events: Vec<event::Subscribe>) -> BytesMut {
-    let payload = serde_json::to_string(&events[..]).unwrap();
-    let mut buf = BytesMut::with_capacity(14 + payload.len());
-    buf.put_slice(MAGIC.as_bytes());
-    buf.put_u32_le(payload.len() as u32);
-    buf.put_u32_le(2);
-    buf.put_slice(payload.as_bytes());
-    println!("writing {:#?}", buf);
-    buf
-}
-
-fn decode_response<F>(stream: UnixStream, f: F) -> impl Future<Item = UnixStream, Error = io::Error>
+pub fn decode_response<F>(
+    stream: UnixStream,
+    f: F,
+) -> impl Future<Item = UnixStream, Error = io::Error>
 where
     F: Fn(u32, Vec<u8>),
 {
@@ -150,14 +142,6 @@ where
             future::ok(stream)
         })
     })
-}
-
-fn read_payload(evt_type: u32, buf: Vec<u8>) {
-    let s = String::from_utf8(buf.to_vec()).unwrap();
-    println!("{:?}", s);
-    dbg!(evt_type);
-    let out = decode_event(evt_type, buf).unwrap();
-    dbg!(out);
 }
 
 #[cfg(test)]
@@ -192,21 +176,3 @@ mod test {
     }
 
 }
-// let buf = [0; 14];
-// tokio::io::read_exact(stream, buf).and_then(|(stream, initial)| {
-//     if &initial[0..6] != MAGIC.as_bytes() {
-//         panic!("Magic str not received");
-//     }
-//     let payload_len = LittleEndian::read_u32(&initial[6..10]) as usize;
-//     dbg!(payload_len);
-//     let evt_type = LittleEndian::read_u32(&initial[10..14]);
-//     let buf = vec![0; payload_len];
-//     tokio::io::read_exact(stream, buf).and_then(move |(_stream, buf)| {
-//         let s = String::from_utf8(buf.to_vec()).unwrap();
-//         println!("{:?}", s);
-//         dbg!(evt_type);
-//         let out = decode_evt(evt_type, buf).unwrap();
-//         dbg!(out);
-//         future::ok(())
-//     })
-// })

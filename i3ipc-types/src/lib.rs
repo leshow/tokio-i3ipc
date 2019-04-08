@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 use std::{env, io, process::Command};
 
 pub mod event;
@@ -14,25 +16,40 @@ pub const MAGIC: &str = "i3-ipc";
 pub trait I3IPC: io::Read + io::Write {
     const MAGIC: &'static str = MAGIC;
 
-    fn encode_msg(&self, msg: msg::Msg) -> Vec<u8> {
+    fn _encode_msg<P>(&self, msg: msg::Msg, payload: Option<P>) -> Vec<u8>
+    where
+        P: AsRef<str>,
+    {
         let mut buf = Vec::with_capacity(14);
         buf.extend(<Self as I3IPC>::MAGIC.as_bytes());
-        buf.extend(&(0_u32).to_ne_bytes());
+        if let Some(p) = &payload {
+            buf.extend(&(p.as_ref().len() as u32).to_ne_bytes());
+        } else {
+            buf.extend(&(0_u32).to_ne_bytes());
+        }
         buf.extend(&<u32 as From<msg::Msg>>::from(msg).to_ne_bytes());
+        if let Some(p) = &payload {
+            buf.extend(p.as_ref().as_bytes());
+        }
         buf
+    }
+
+    fn encode_msg(&self, msg: msg::Msg) -> Vec<u8> {
+        self._encode_msg::<&str>(msg, None)
     }
 
     fn encode_msg_body<P>(&self, msg: msg::Msg, payload: P) -> Vec<u8>
     where
         P: AsRef<str>,
     {
-        let payload = payload.as_ref();
-        let mut buf = Vec::with_capacity(14 + payload.len());
-        buf.extend(<Self as I3IPC>::MAGIC.as_bytes());
-        buf.extend(&(payload.len() as u32).to_ne_bytes());
-        buf.extend(&<u32 as From<msg::Msg>>::from(msg).to_ne_bytes());
-        buf.extend(payload.as_bytes());
-        buf
+        self._encode_msg(msg, Some(payload))
+    }
+
+    fn encode_msg_json<P>(&self, msg: msg::Msg, payload: P) -> io::Result<Vec<u8>>
+    where
+        P: Serialize,
+    {
+        Ok(self.encode_msg_body(msg, serde_json::to_string(&payload)?))
     }
 
     fn decode_event(evt_type: u32, payload: Vec<u8>) -> io::Result<event::Event> {

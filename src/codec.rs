@@ -46,22 +46,20 @@ impl Decoder for EvtCodec {
     }
 }
 
-pub fn run_command<S>(command: S) -> impl Future<Item = Vec<reply::Success>, Error = io::Error>
+pub fn run_command<S>(
+    command: S,
+) -> impl Future<Item = io::Result<Vec<reply::Success>>, Error = io::Error>
 where
     S: AsRef<str>,
 {
     I3::new()
-        .unwrap()
+        .expect("cant find i3 socket")
         .and_then(|stream| {
             let buf = stream.encode_msg_body(Msg::RunCommand, command);
             tokio::io::write_all(stream, buf)
         })
         .and_then(|(stream, _buf)| {
-            decode_response(stream, |msg_ty, buf| {
-                let msg: MsgResponse<Vec<reply::Success>> = MsgResponse::new(msg_ty, buf).unwrap();
-                msg
-            })
-            .map(|(_stream, msg)| msg.body)
+            decode_msg::<Vec<reply::Success>>(stream).map(|(_stream, msg)| msg.map(|m| m.body))
         })
 }
 
@@ -92,7 +90,7 @@ pub fn subscribe(
     tx: Sender<event::Event>,
     events: Vec<Subscribe>,
 ) -> io::Result<()> {
-    let fut = UnixStream::connect(socket_path()?)
+    let fut = I3::new()?
         .and_then(move |stream| {
             let buf = stream.encode_msg_json(Msg::Subscribe, events).unwrap();
             tokio::io::write_all(stream, buf)
@@ -145,6 +143,27 @@ where
         let buf = vec![0; payload_len];
         tokio::io::read_exact(stream, buf)
             .and_then(move |(stream, buf)| future::ok((stream, f(evt_type, buf))))
+    })
+}
+
+pub fn decode_msg<D>(
+    stream: UnixStream,
+) -> impl Future<Item = (UnixStream, io::Result<MsgResponse<D>>), Error = io::Error>
+where
+    D: DeserializeOwned,
+{
+    let buf = [0; 14];
+    tokio::io::read_exact(stream, buf).and_then(|(stream, initial)| {
+        if &initial[0..6] != MAGIC.as_bytes() {
+            panic!("Magic str not received");
+        }
+        let payload_len = LittleEndian::read_u32(&initial[6..10]) as usize;
+        dbg!(payload_len);
+        let evt_type = LittleEndian::read_u32(&initial[10..14]);
+
+        let buf = vec![0; payload_len];
+        tokio::io::read_exact(stream, buf)
+            .and_then(move |(stream, buf)| future::ok((stream, MsgResponse::new(evt_type, buf))))
     })
 }
 

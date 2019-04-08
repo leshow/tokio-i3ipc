@@ -3,11 +3,11 @@ pub use i3ipc_types::*;
 mod codec;
 pub use codec::*;
 
-use bytes::{Buf, BufMut, ByteOrder, Bytes, BytesMut, LittleEndian};
+use bytes::{ByteOrder, LittleEndian};
 use futures::{try_ready, Async, Future, Poll};
 use serde::de::DeserializeOwned;
 use tokio::prelude::*;
-use tokio_io::{AsyncRead, AsyncWrite};
+use tokio_io::{io::read_exact, AsyncRead, AsyncWrite};
 use tokio_uds::{ConnectFuture, UnixStream};
 
 use std::{io, marker::PhantomData};
@@ -53,9 +53,9 @@ impl<D: DeserializeOwned> Future for I3Msg<D> {
     type Item = MsgResponse<D>;
     type Error = io::Error;
     fn poll(&mut self) -> Poll<Self::Item, io::Error> {
-        let mut initial = BytesMut::with_capacity(1024);
-        try_ready!(self.stream.read_buf(&mut initial));
-        dbg!(&initial);
+        let mut buf = [0_u8; 14];
+        let (rdr, initial) = try_ready!(read_exact(&self.stream, &mut buf).poll());
+
         if &initial[0..6] != MAGIC.as_bytes() {
             panic!("Magic str not received");
         }
@@ -63,11 +63,12 @@ impl<D: DeserializeOwned> Future for I3Msg<D> {
         dbg!(payload_len);
         let msg_type = LittleEndian::read_u32(&initial[10..14]);
         dbg!(msg_type);
-        // try_ready!(self.stream.read_buf(&mut initial));
+        let mut buf = vec![0_u8; payload_len];
+        let (_rdr, payload) = try_ready!(read_exact(rdr, &mut buf).poll());
 
         Ok(Async::Ready(MsgResponse {
             msg_type: msg_type.into(),
-            body: serde_json::from_slice(&initial[14..])?,
+            body: serde_json::from_slice(&payload[..])?,
         }))
     }
 }

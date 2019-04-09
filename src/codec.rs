@@ -1,4 +1,4 @@
-use bytes::{BufMut, ByteOrder, BytesMut, LittleEndian};
+use bytes::BytesMut;
 use futures::prelude::*;
 use futures::sync::mpsc::Sender;
 use futures::Stream;
@@ -31,8 +31,8 @@ impl Decoder for EvtCodec {
                     format!("Expected 'i3-ipc' but received: {:?}", &src[0..6]),
                 ));
             }
-            let payload_len = LittleEndian::read_u32(&src[6..10]) as usize;
-            let evt_type = LittleEndian::read_u32(&src[10..14]);
+            let payload_len = u32::from_ne_bytes([src[6], src[7], src[8], src[9]]) as usize;
+            let evt_type = u32::from_ne_bytes([src[10], src[11], src[12], src[13]]);
             if src.len() < 14 + payload_len {
                 Ok(None)
             } else {
@@ -129,17 +129,17 @@ where
     D: DeserializeOwned,
 {
     let buf = [0; 14];
-    tokio::io::read_exact(stream, buf).and_then(|(stream, initial)| {
-        if &initial[0..6] != MAGIC.as_bytes() {
+    tokio::io::read_exact(stream, buf).and_then(|(stream, init)| {
+        if &init[0..6] != MAGIC.as_bytes() {
             panic!("Magic str not received");
         }
-        let payload_len = LittleEndian::read_u32(&initial[6..10]) as usize;
+        let payload_len = u32::from_ne_bytes([init[6], init[7], init[8], init[9]]) as usize;
         dbg!(payload_len);
-        let evt_type = LittleEndian::read_u32(&initial[10..14]);
+        let msg_type = u32::from_ne_bytes([init[10], init[11], init[12], init[13]]);
 
         let buf = vec![0; payload_len];
         tokio::io::read_exact(stream, buf)
-            .and_then(move |(stream, buf)| future::ok((stream, f(evt_type, buf))))
+            .and_then(move |(stream, buf)| future::ok((stream, f(msg_type, buf))))
     })
 }
 
@@ -150,17 +150,17 @@ where
     D: DeserializeOwned,
 {
     let buf = [0; 14];
-    tokio::io::read_exact(stream, buf).and_then(|(stream, initial)| {
-        if &initial[0..6] != MAGIC.as_bytes() {
+    tokio::io::read_exact(stream, buf).and_then(|(stream, init)| {
+        if &init[0..6] != MAGIC.as_bytes() {
             panic!("Magic str not received");
         }
-        let payload_len = LittleEndian::read_u32(&initial[6..10]) as usize;
+        let payload_len = u32::from_ne_bytes([init[6], init[7], init[8], init[9]]) as usize;
         dbg!(payload_len);
-        let evt_type = LittleEndian::read_u32(&initial[10..14]);
+        let msg_type = u32::from_ne_bytes([init[10], init[11], init[12], init[13]]);
 
         let buf = vec![0; payload_len];
         tokio::io::read_exact(stream, buf)
-            .and_then(move |(stream, buf)| future::ok((stream, MsgResponse::new(evt_type, buf))))
+            .and_then(move |(stream, buf)| future::ok((stream, MsgResponse::new(msg_type, buf))))
     })
 }
 

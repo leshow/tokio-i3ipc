@@ -3,7 +3,6 @@ pub use i3ipc_types::*;
 mod codec;
 pub use codec::*;
 
-use bytes::{ByteOrder, LittleEndian};
 use futures::{try_ready, Async, Future, Poll};
 use serde::de::DeserializeOwned;
 use tokio_io::{io::read_exact, AsyncRead, AsyncWrite};
@@ -55,6 +54,7 @@ where
     // R: AsyncRead + AsyncWrite,
     D: DeserializeOwned,
 {
+    // pub fn new(stream: R) -> Self {
     pub fn new(stream: UnixStream) -> Self {
         I3Msg {
             stream,
@@ -73,14 +73,14 @@ where
     type Error = io::Error;
     fn poll(&mut self) -> Poll<Self::Item, io::Error> {
         let mut buf = [0_u8; 14];
-        let (rdr, initial) = try_ready!(read_exact(&self.stream, &mut buf).poll());
+        let (rdr, init) = try_ready!(read_exact(&self.stream, &mut buf).poll());
 
-        if &initial[0..6] != MAGIC.as_bytes() {
+        if &init[0..6] != MAGIC.as_bytes() {
             panic!("Magic str not received");
         }
-        let payload_len = LittleEndian::read_u32(&initial[6..10]) as usize;
+        let payload_len = u32::from_ne_bytes([init[6], init[7], init[8], init[9]]) as usize;
         dbg!(payload_len);
-        let msg_type = LittleEndian::read_u32(&initial[10..14]);
+        let msg_type = u32::from_ne_bytes([init[10], init[11], init[12], init[13]]);
         dbg!(msg_type);
         let mut buf = vec![0_u8; payload_len];
         let (_rdr, payload) = try_ready!(read_exact(rdr, &mut buf).poll());

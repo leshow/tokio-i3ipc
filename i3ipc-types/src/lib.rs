@@ -112,31 +112,31 @@ pub fn socket_path() -> io::Result<String> {
     }
 }
 
-pub fn decode_event(evt_type: u32, payload: Vec<u8>) -> io::Result<event::Event> {
+pub fn decode_event<P>(evt_type: u32, payload: P) -> io::Result<event::Event> where P: AsRef<[u8]>{
     use event::{Event, Subscribe};
     let evt_type = evt_type & !(1 << 31);
     dbg!(&evt_type);
     let body = match evt_type.into() {
         Subscribe::Workspace => Event::Workspace(Box::new(serde_json::from_slice::<
             event::WorkspaceData,
-        >(&payload[..])?)),
+        >(payload.as_ref())?)),
         Subscribe::Output => {
-            Event::Output(serde_json::from_slice::<event::OutputData>(&payload[..])?)
+            Event::Output(serde_json::from_slice::<event::OutputData>(payload.as_ref())?)
         }
-        Subscribe::Mode => Event::Mode(serde_json::from_slice::<event::ModeData>(&payload[..])?),
+        Subscribe::Mode => Event::Mode(serde_json::from_slice::<event::ModeData>(payload.as_ref())?),
         Subscribe::Window => Event::Window(Box::new(serde_json::from_slice::<event::WindowData>(
-            &payload[..],
+            payload.as_ref(),
         )?)),
         Subscribe::BarConfigUpdate => Event::BarConfig(serde_json::from_slice::<
             event::BarConfigData,
-        >(&payload[..])?),
+        >(payload.as_ref())?),
         Subscribe::Binding => {
-            Event::Binding(serde_json::from_slice::<event::BindingData>(&payload[..])?)
+            Event::Binding(serde_json::from_slice::<event::BindingData>(payload.as_ref())?)
         }
         Subscribe::Shutdown => {
-            Event::Shutdown(serde_json::from_slice::<event::ShutdownData>(&payload[..])?)
+            Event::Shutdown(serde_json::from_slice::<event::ShutdownData>(payload.as_ref())?)
         }
-        Subscribe::Tick => Event::Tick(serde_json::from_slice::<event::TickData>(&payload[..])?),
+        Subscribe::Tick => Event::Tick(serde_json::from_slice::<event::TickData>(payload.as_ref())?)
     };
     Ok(body)
 }

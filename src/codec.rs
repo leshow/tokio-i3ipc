@@ -36,8 +36,8 @@ impl Decoder for EvtCodec {
             if src.len() < 14 + payload_len {
                 Ok(None)
             } else {
-                let evt = decode_event(evt_type, src[14..].as_mut().to_vec())?;
-                src.clear();
+                let evt = decode_event(evt_type, &src[14..14 + payload_len])?;
+                src.advance(14 + payload_len);
                 Ok(Some(evt))
             }
         } else {

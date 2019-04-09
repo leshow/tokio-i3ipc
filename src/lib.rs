@@ -22,9 +22,10 @@ trait AsyncConnect {
         Self: Sized;
 }
 
-// unused so far
+// Provide default impls from I3IPC plus require `AsyncRead` and `AsyncWrite`
 trait AsyncI3IPC: AsyncRead + AsyncWrite + I3IPC {}
-// add default impls to UnixStream
+
+// Add default impls to UnixStream
 impl AsyncI3IPC for UnixStream {}
 
 impl AsyncConnect for I3 {
@@ -45,11 +46,30 @@ impl Future for I3 {
 
 #[derive(Debug)]
 pub struct I3Msg<D> {
-    stream: UnixStream,
+    stream: UnixStream, // R,
     _marker: PhantomData<D>,
 }
 
-impl<D: DeserializeOwned> Future for I3Msg<D> {
+// impl<R, D> I3Msg<R, D>
+impl<D> I3Msg<D>
+where
+    // R: AsyncRead + AsyncWrite,
+    D: DeserializeOwned,
+{
+    pub fn new(stream: UnixStream) -> Self {
+        I3Msg {
+            stream,
+            _marker: PhantomData,
+        }
+    }
+}
+
+// impl<R, D> Future for I3Msg<R, D>
+impl<D> Future for I3Msg<D>
+where
+    D: DeserializeOwned,
+    // R: AsyncRead + AsyncWrite,
+{
     type Item = MsgResponse<D>;
     type Error = io::Error;
     fn poll(&mut self) -> Poll<Self::Item, io::Error> {

@@ -11,12 +11,12 @@ use i3ipc_types::{
     decode_event,
     event::{self, Subscribe},
     msg::Msg,
-    reply, socket_path, MsgResponse, I3IPC, MAGIC,
+    reply, MsgResponse, I3IPC, MAGIC,
 };
 
 use crate::{AsyncConnect, I3Msg, I3};
 
-use std::{io, marker::PhantomData};
+use std::io;
 
 pub struct EvtCodec;
 
@@ -71,10 +71,7 @@ pub fn get_workspaces(tx: Sender<reply::Workspaces>) -> io::Result<()> {
             dbg!(&buf[..]);
             tokio::io::write_all(stream, buf)
         })
-        .and_then(|(stream, _buf)| I3Msg::<reply::Workspaces> {
-            stream,
-            _marker: PhantomData,
-        })
+        .and_then(|(stream, _buf)| I3Msg::<reply::Workspaces>::new(stream))
         .and_then(|resp| {
             dbg!(resp);
             Ok(())

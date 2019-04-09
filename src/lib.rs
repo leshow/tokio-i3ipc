@@ -6,7 +6,6 @@ pub use codec::*;
 use bytes::{ByteOrder, LittleEndian};
 use futures::{try_ready, Async, Future, Poll};
 use serde::de::DeserializeOwned;
-use tokio::prelude::*;
 use tokio_io::{io::read_exact, AsyncRead, AsyncWrite};
 use tokio_uds::{ConnectFuture, UnixStream};
 

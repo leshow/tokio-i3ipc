@@ -1,4 +1,4 @@
-#[derive(Eq, PartialEq, Hash, Debug, Clone)]
+#[derive(Eq, PartialEq, Hash, Debug, Clone, Copy)]
 pub enum Msg {
     RunCommand,
     Workspaces,

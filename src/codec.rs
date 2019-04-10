@@ -1,10 +1,9 @@
 use bytes::BytesMut;
 use futures::prelude::*;
 use futures::sync::mpsc::Sender;
-use futures::Stream;
+use futures::{future, Stream};
 use serde::de::DeserializeOwned;
-use tokio::prelude::*;
-use tokio_codec::{Decoder, FramedRead};
+use tokio::codec::{Decoder, FramedRead};
 use tokio_uds::UnixStream;
 
 use i3ipc_types::{
@@ -14,13 +13,13 @@ use i3ipc_types::{
     reply, MsgResponse, I3IPC, MAGIC,
 };
 
-use crate::{AsyncConnect, I3Msg, I3};
+use crate::{read_msg, read_msg_and, AsyncConnect, I3};
 
 use std::io;
 
-pub struct EvtCodec;
+pub struct EventCodec;
 
-impl Decoder for EvtCodec {
+impl Decoder for EventCodec {
     type Item = event::Event;
     type Error = io::Error;
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, io::Error> {
@@ -52,9 +51,9 @@ pub fn run_command<S>(
 where
     S: AsRef<str>,
 {
-    I3::new()
+    I3::conn()
         .expect("cant find i3 socket")
-        .and_then(|stream| {
+        .and_then(|stream: UnixStream| {
             let buf = stream.encode_msg_body(Msg::RunCommand, command);
             tokio::io::write_all(stream, buf)
         })
@@ -64,21 +63,19 @@ where
 }
 
 pub fn get_workspaces(tx: Sender<reply::Workspaces>) -> io::Result<()> {
-    let fut = I3::new()?;
-    tokio::run(
-        fut.and_then(|stream| {
+    let fut = I3::conn()?
+        .and_then(|stream: UnixStream| {
             let buf = stream.encode_msg(Msg::Workspaces);
             dbg!(&buf[..]);
             tokio::io::write_all(stream, buf)
         })
-        .and_then(|(stream, _buf)| I3Msg::<reply::Workspaces>::new(stream))
+        .and_then(|(stream, _buf)| read_msg::<reply::Workspaces, _>(stream))
         .and_then(|resp| {
             dbg!(resp);
             Ok(())
         })
         .map(|_| ())
-        .map_err(|e| println!("{}", e)),
-    );
+        .map_err(|e| println!("{}", e));
     Ok(())
 }
 
@@ -87,21 +84,22 @@ pub fn subscribe(
     tx: Sender<event::Event>,
     events: Vec<Subscribe>,
 ) -> io::Result<()> {
-    let fut = I3::new()?
-        .and_then(move |stream| {
+    let fut = I3::conn()?
+        .and_then(move |stream: UnixStream| {
             let buf = stream.encode_msg_json(Msg::Subscribe, events).unwrap();
             tokio::io::write_all(stream, buf)
         })
         .and_then(|(stream, _buf)| {
-            decode_response(stream, |msg_type: u32, buf: Vec<u8>| {
-                dbg!(msg_type);
-                let msg: MsgResponse<reply::Success> = MsgResponse::new(msg_type, buf).unwrap();
-                dbg!(&msg);
-                msg
-            })
+            read_msg_and::<reply::Success, _>(stream)
+            // decode_response(stream, |msg_type: u32, buf: Vec<u8>| {
+            //     dbg!(msg_type);
+            //     let msg: MsgResponse<reply::Success> = MsgResponse::new(msg_type, buf).unwrap();
+            //     dbg!(&msg);
+            //     msg
+            // })
         })
         .and_then(move |(stream, _)| {
-            let framed = FramedRead::new(stream, EvtCodec);
+            let framed = FramedRead::new(stream, EventCodec);
             let sender = framed
                 .for_each(move |evt| {
                     let tx = tx.clone();
@@ -120,13 +118,12 @@ pub fn subscribe(
     Ok(())
 }
 
-pub fn decode_response<F, D>(
+pub fn decode_response<F, T>(
     stream: UnixStream,
     f: F,
-) -> impl Future<Item = (UnixStream, MsgResponse<D>), Error = io::Error>
+) -> impl Future<Item = (UnixStream, T), Error = io::Error>
 where
-    F: Fn(u32, Vec<u8>) -> MsgResponse<D>,
-    D: DeserializeOwned,
+    F: Fn(u32, Vec<u8>) -> T,
 {
     let buf = [0; 14];
     tokio::io::read_exact(stream, buf).and_then(|(stream, init)| {
@@ -149,19 +146,16 @@ pub fn decode_msg<D>(
 where
     D: DeserializeOwned,
 {
-    let buf = [0; 14];
-    tokio::io::read_exact(stream, buf).and_then(|(stream, init)| {
-        if &init[0..6] != MAGIC.as_bytes() {
-            panic!("Magic str not received");
-        }
-        let payload_len = u32::from_ne_bytes([init[6], init[7], init[8], init[9]]) as usize;
-        dbg!(payload_len);
-        let msg_type = u32::from_ne_bytes([init[10], init[11], init[12], init[13]]);
+    decode_response(stream, MsgResponse::new)
+}
 
-        let buf = vec![0; payload_len];
-        tokio::io::read_exact(stream, buf)
-            .and_then(move |(stream, buf)| future::ok((stream, MsgResponse::new(msg_type, buf))))
-    })
+pub fn decode_event_fut<D>(
+    stream: UnixStream,
+) -> impl Future<Item = (UnixStream, io::Result<event::Event>), Error = io::Error>
+where
+    D: DeserializeOwned,
+{
+    decode_response(stream, decode_event)
 }
 
 #[cfg(test)]

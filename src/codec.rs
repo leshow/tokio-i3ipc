@@ -13,7 +13,7 @@ use i3ipc_types::{
     reply, MsgResponse, I3IPC, MAGIC,
 };
 
-use crate::{read_msg, read_msg_and, AsyncConnect, I3};
+use crate::{read_msg, read_msg_and, run_msg, Connect, I3};
 
 use std::io;
 
@@ -51,8 +51,8 @@ pub fn run_command<S>(
 where
     S: AsRef<str>,
 {
-    I3::conn()
-        .expect("cant find i3 socket")
+    I3::connect()
+        .expect("unable to get socket")
         .and_then(|stream: UnixStream| {
             let buf = stream.encode_msg_body(Msg::RunCommand, command);
             tokio::io::write_all(stream, buf)
@@ -62,8 +62,8 @@ where
         })
 }
 
-pub fn get_workspaces(tx: Sender<reply::Workspaces>) -> io::Result<()> {
-    let fut = I3::conn()?
+pub fn get_workspaces() -> io::Result<()> {
+    let fut = I3::connect()?
         .and_then(|stream: UnixStream| {
             let buf = stream.encode_msg(Msg::Workspaces);
             dbg!(&buf[..]);
@@ -79,25 +79,29 @@ pub fn get_workspaces(tx: Sender<reply::Workspaces>) -> io::Result<()> {
     Ok(())
 }
 
+pub fn get_outputs() -> io::Result<()> {
+    let fut = I3::connect()?
+        .and_then(|stream: UnixStream| run_msg::<reply::Outputs, _>(stream, Msg::Outputs))
+        .and_then(|resp| {
+            dbg!(resp);
+            Ok(())
+        })
+        .map(|_| ())
+        .map_err(|e| println!("{}", e));
+    Ok(())
+}
+
 pub fn subscribe(
     rt: tokio::runtime::current_thread::Handle,
     tx: Sender<event::Event>,
     events: Vec<Subscribe>,
 ) -> io::Result<()> {
-    let fut = I3::conn()?
+    let fut = I3::connect()?
         .and_then(move |stream: UnixStream| {
             let buf = stream.encode_msg_json(Msg::Subscribe, events).unwrap();
             tokio::io::write_all(stream, buf)
         })
-        .and_then(|(stream, _buf)| {
-            read_msg_and::<reply::Success, _>(stream)
-            // decode_response(stream, |msg_type: u32, buf: Vec<u8>| {
-            //     dbg!(msg_type);
-            //     let msg: MsgResponse<reply::Success> = MsgResponse::new(msg_type, buf).unwrap();
-            //     dbg!(&msg);
-            //     msg
-            // })
-        })
+        .and_then(|(stream, _buf)| read_msg_and::<reply::Success, _>(stream))
         .and_then(move |(stream, _)| {
             let framed = FramedRead::new(stream, EventCodec);
             let sender = framed
@@ -184,8 +188,7 @@ mod test {
 
     #[test]
     fn test_workspaces() -> io::Result<()> {
-        let (tx, rx) = mpsc::channel(5);
-        get_workspaces(tx)?;
+        get_workspaces()?;
         Ok(())
     }
 

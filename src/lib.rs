@@ -14,14 +14,23 @@ use std::{io, marker::PhantomData};
 #[derive(Debug)]
 pub struct I3 {
     conn: ConnectFuture,
-    // _marker: PhantomData<R>
 }
 
-trait AsyncConnect {
-    type Stream: AsyncI3IPC;
-    fn conn() -> io::Result<Self>
-    where
-        Self: Sized;
+pub trait Connect {
+    type Connected: AsyncI3IPC;
+    type Error;
+    type Future: Future<Item = Self::Connected, Error = Self::Error>;
+
+    fn connect() -> io::Result<Self::Future>;
+}
+
+impl Connect for I3 {
+    type Connected = UnixStream;
+    type Future = ConnectFuture;
+    type Error = io::Error;
+    fn connect() -> io::Result<Self::Future> {
+        Ok(UnixStream::connect(socket_path()?))
+    }
 }
 
 /// `I3IPC` provides default implementations for reading/writing buffers into a format i3 understands. This
@@ -30,17 +39,6 @@ pub trait AsyncI3IPC: AsyncRead + AsyncWrite + I3IPC {}
 
 /// Add the default trait to `UnixStream`
 impl AsyncI3IPC for UnixStream {}
-
-/// Here we implement `AsyncConnect` for I3, it's implementation provides a way to get a socket path and returns `ConnectFuture`
-// impl<R> AsyncConnect for I3<R> where R: AsyncI3IPC {
-impl AsyncConnect for I3 {
-    type Stream = UnixStream; // R;
-    fn conn() -> io::Result<Self> {
-        Ok(I3 {
-            conn: UnixStream::connect(socket_path()?),
-        }) //, _marker: PhantomData })
-    }
-}
 
 // Implement `Future` for `I3` so it can be polled into a ready `UnixStream`
 // impl<R> Future for I3<R> where R: AsyncI3IPC {
@@ -174,15 +172,17 @@ where
 }
 
 #[derive(Debug)]
-pub struct I3Command<D, I3 = UnixStream> {
+pub struct I3Command<D, P = String, I3 = UnixStream> {
     msg: msg::Msg,
+    payload: Option<P>,
     state: State<I3, Option<MsgResponse<D>>>,
     _marker: PhantomData<D>,
 }
 
-impl<D, I3> Future for I3Command<D, I3>
+impl<D, P, I3> Future for I3Command<D, P, I3>
 where
     D: DeserializeOwned,
+    P: AsRef<str>,
     I3: AsyncI3IPC,
 {
     type Item = (I3, MsgResponse<D>);
@@ -193,7 +193,9 @@ where
                 ref mut stream,
                 ref mut resp,
             } => {
-                let send = stream.encode_msg(self.msg);
+                let msg = self.msg;
+                let payload = self.payload.take();
+                let send = stream._encode_msg(msg, payload);
                 let (stream, _size) = try_ready!(tio::write_all(stream, send).poll());
 
                 let msg = try_ready!(read_msg::<D, _>(stream).poll());
@@ -212,13 +214,32 @@ where
     }
 }
 
-pub fn run_msg<D, I3>(stream: I3, msg: msg::Msg) -> I3Command<D, I3>
+pub fn run_msg_payload<D, P, I3>(
+    stream: I3,
+    msg: msg::Msg,
+    payload: Option<P>,
+) -> I3Command<D, P, I3>
+where
+    I3: AsyncI3IPC,
+    D: DeserializeOwned,
+    P: AsRef<str>,
+{
+    I3Command {
+        msg,
+        payload,
+        state: State::Reading { stream, resp: None },
+        _marker: PhantomData,
+    }
+}
+
+pub fn run_msg<D, I3>(stream: I3, msg: msg::Msg) -> I3Command<D, String, I3>
 where
     I3: AsyncI3IPC,
     D: DeserializeOwned,
 {
     I3Command {
         msg,
+        payload: None,
         state: State::Reading { stream, resp: None },
         _marker: PhantomData,
     }

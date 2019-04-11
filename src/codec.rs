@@ -17,6 +17,9 @@ use crate::{read_msg, read_msg_and, run_msg, Connect, I3};
 
 use std::io;
 
+/// This codec only impls `Decoder` because it's only job is to read messages from i3 and turn
+/// them into frames of Events. All other interactions with i3 over the IPC are simple send/receive
+/// operations. Events received will be relative to what was subscribed.
 pub struct EventCodec;
 
 impl Decoder for EventCodec {
@@ -32,11 +35,13 @@ impl Decoder for EventCodec {
             }
             let payload_len = u32::from_ne_bytes([src[6], src[7], src[8], src[9]]) as usize;
             let evt_type = u32::from_ne_bytes([src[10], src[11], src[12], src[13]]);
-            if src.len() < 14 + payload_len {
+            // ends at payload + original 14 bytes
+            let end_len = 14 + payload_len;
+            if src.len() < end_len {
                 Ok(None)
             } else {
-                let evt = decode_event(evt_type, &src[14..14 + payload_len])?;
-                src.advance(14 + payload_len);
+                let evt = decode_event(evt_type, &src[14..end_len])?;
+                src.advance(end_len);
                 Ok(Some(evt))
             }
         } else {
@@ -45,6 +50,7 @@ impl Decoder for EventCodec {
     }
 }
 
+/// Run an arbitrary command for i3 and decode the responses, represented as vector of success true/false
 pub fn run_command<S>(
     command: S,
 ) -> impl Future<Item = io::Result<Vec<reply::Success>>, Error = io::Error>

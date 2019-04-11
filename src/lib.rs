@@ -1,14 +1,16 @@
 // re-export i3ipc-types so users only have to import 1 thing
 pub use i3ipc_types::*;
-mod codec;
-pub use codec::*;
+pub mod codec;
+pub mod get;
 
-use futures::{try_ready, Async, Future, Poll};
-use serde::de::DeserializeOwned;
+use futures::prelude::*;
+use futures::{future, sync::mpsc::Sender, try_ready, Async, Future, Poll, };
+use serde::{de::DeserializeOwned, Serialize};
+use std::{io, marker::PhantomData};
+use tokio::codec::FramedRead;
 use tokio::io::{self as tio, AsyncRead, AsyncWrite};
 use tokio_uds::{ConnectFuture, UnixStream};
 
-use std::{io, marker::PhantomData};
 
 /// Newtype wrapper for `ConnectFuture` meant to resolve some Stream, mostly likely `UnixStream`
 #[derive(Debug)]
@@ -52,16 +54,17 @@ impl Future for I3 where {
 }
 
 #[derive(Debug)]
-pub struct I3Msg<D, R = UnixStream> {
-    stream: R,
+pub struct I3Msg<D, S = UnixStream> {
+    stream: S,
     _marker: PhantomData<D>,
 }
 
-impl<D, R> I3Msg<D, R>
+impl<D, S> I3Msg<D, S>
 where
     D: DeserializeOwned,
+    S: AsyncRead,
 {
-    pub fn new(stream: R) -> Self {
+    pub fn new(stream: S) -> Self {
         Self {
             stream,
             _marker: PhantomData,
@@ -69,9 +72,9 @@ where
     }
 }
 
-impl<D, R> Future for I3Msg<D, R>
+impl<D, S> Future for I3Msg<D, S>
 where
-    R: AsyncRead,
+    S: AsyncRead,
     D: DeserializeOwned,
 {
     type Item = MsgResponse<D>;
@@ -98,9 +101,9 @@ where
     }
 }
 
-pub fn read_msg<D, R>(stream: R) -> I3Msg<D, R>
+pub fn read_msg<D, S>(stream: S) -> I3Msg<D, S>
 where
-    R: AsyncRead,
+    S: AsyncRead,
     D: DeserializeOwned,
 {
     I3Msg {
@@ -110,23 +113,23 @@ where
 }
 
 #[derive(Debug)]
-pub struct I3MsgAnd<D, R = UnixStream> {
-    state: State<R, Option<MsgResponse<D>>>,
+pub struct I3MsgAnd<D, S = UnixStream> {
+    state: State<S, Option<MsgResponse<D>>>,
     _marker: PhantomData<D>,
 }
 
 #[derive(Debug)]
-enum State<R, D> {
-    Reading { stream: R, resp: D },
+enum State<S, D> {
+    Reading { stream: S, resp: D },
     Empty,
 }
 
-impl<D, R> I3MsgAnd<D, R>
+impl<D, S> I3MsgAnd<D, S>
 where
-    R: AsyncRead,
+    S: AsyncRead,
     D: DeserializeOwned,
 {
-    pub fn new(stream: R) -> Self {
+    pub fn new(stream: S) -> Self {
         Self {
             state: State::Reading { stream, resp: None },
             _marker: PhantomData,
@@ -134,12 +137,12 @@ where
     }
 }
 
-impl<D, R> Future for I3MsgAnd<D, R>
+impl<D, S> Future for I3MsgAnd<D, S>
 where
     D: DeserializeOwned,
-    R: AsyncRead,
+    S: AsyncRead,
 {
-    type Item = (R, MsgResponse<D>);
+    type Item = (S, MsgResponse<D>);
     type Error = io::Error;
     fn poll(&mut self) -> Poll<Self::Item, io::Error> {
         match self.state {
@@ -163,29 +166,31 @@ where
     }
 }
 
-pub fn read_msg_and<D, R>(stream: R) -> I3MsgAnd<D, R>
+pub fn read_msg_and<D, S>(stream: S) -> I3MsgAnd<D, S>
 where
-    R: AsyncRead,
+    S: AsyncRead,
     D: DeserializeOwned,
 {
     I3MsgAnd::new(stream)
 }
 
+/// Future for encoding a message, writing it to the stream, then reading the response
+/// After which, it returns the stream and the message result in a tuple
 #[derive(Debug)]
-pub struct I3Command<D, P = String, I3 = UnixStream> {
+pub struct I3Command<D, P = String, S = UnixStream> {
     msg: msg::Msg,
     payload: Option<P>,
-    state: State<I3, Option<MsgResponse<D>>>,
+    state: State<S, Option<MsgResponse<D>>>,
     _marker: PhantomData<D>,
 }
 
-impl<D, P, I3> Future for I3Command<D, P, I3>
+impl<D, P, S> Future for I3Command<D, P, S>
 where
     D: DeserializeOwned,
     P: AsRef<str>,
-    I3: AsyncI3IPC,
+    S: AsyncI3IPC,
 {
-    type Item = (I3, MsgResponse<D>);
+    type Item = (S, MsgResponse<D>);
     type Error = io::Error;
     fn poll(&mut self) -> Poll<Self::Item, io::Error> {
         match self.state {
@@ -214,13 +219,9 @@ where
     }
 }
 
-pub fn run_msg_payload<D, P, I3>(
-    stream: I3,
-    msg: msg::Msg,
-    payload: Option<P>,
-) -> I3Command<D, P, I3>
+fn _run_msg<D, P, S>(stream: S, msg: msg::Msg, payload: Option<P>) -> I3Command<D, P, S>
 where
-    I3: AsyncI3IPC,
+    S: AsyncI3IPC,
     D: DeserializeOwned,
     P: AsRef<str>,
 {
@@ -232,15 +233,143 @@ where
     }
 }
 
-pub fn run_msg<D, I3>(stream: I3, msg: msg::Msg) -> I3Command<D, String, I3>
+pub fn run_msg_payload<D, P, S>(stream: S, msg: msg::Msg, payload: P) -> I3Command<D, P, S>
 where
-    I3: AsyncI3IPC,
+    S: AsyncI3IPC,
+    D: DeserializeOwned,
+    P: AsRef<str>,
+{
+    _run_msg(stream, msg, Some(payload))
+}
+
+pub fn run_msg_json<D, P, S>(
+    stream: S,
+    msg: msg::Msg,
+    payload: P,
+) -> io::Result<I3Command<D, String, S>>
+where
+    S: AsyncI3IPC,
+    D: DeserializeOwned,
+    P: Serialize,
+{
+    Ok(run_msg_payload(
+        stream,
+        msg,
+        serde_json::to_string(&payload)?,
+    ))
+}
+
+pub fn run_msg<D, S>(stream: S, msg: msg::Msg) -> I3Command<D, String, S>
+where
+    S: AsyncI3IPC,
     D: DeserializeOwned,
 {
-    I3Command {
-        msg,
-        payload: None,
-        state: State::Reading { stream, resp: None },
-        _marker: PhantomData,
+    _run_msg(stream, msg, None)
+}
+
+/// Convenience function that decodes a single response and passes the type and buffer to a closure
+pub fn decode_response<F, T, S>(stream: S, f: F) -> impl Future<Item = (S, T), Error = io::Error>
+where
+    F: Fn(u32, Vec<u8>) -> T,
+    S: AsyncRead,
+{
+    let buf = [0; 14];
+    tokio::io::read_exact(stream, buf).and_then(|(stream, init)| {
+        if &init[0..6] != MAGIC.as_bytes() {
+            panic!("Magic str not received");
+        }
+        let payload_len = u32::from_ne_bytes([init[6], init[7], init[8], init[9]]) as usize;
+        dbg!(payload_len);
+        let msg_type = u32::from_ne_bytes([init[10], init[11], init[12], init[13]]);
+
+        let buf = vec![0; payload_len];
+        tokio::io::read_exact(stream, buf)
+            .and_then(move |(stream, buf)| future::ok((stream, f(msg_type, buf))))
+    })
+}
+
+/// Convenience function that uses `decode_response`, formatting the reply in a `MsgResponse`
+pub fn decode_msg<D, S>(
+    stream: S,
+) -> impl Future<Item = (S, io::Result<MsgResponse<D>>), Error = io::Error>
+where
+    D: DeserializeOwned,
+    S: AsyncRead,
+{
+    decode_response(stream, MsgResponse::new)
+}
+
+/// Convenience function that returns the result in `Event` format
+pub fn decode_event_fut<D, S>(
+    stream: S,
+) -> impl Future<Item = (S, io::Result<event::Event>), Error = io::Error>
+where
+    D: DeserializeOwned,
+    S: AsyncRead,
+{
+    decode_response(stream, decode_event)
+}
+
+// subscribe functions
+/// This does the initial sending of the subscribe command with a list of things to listen to
+pub fn send_sub<E: AsRef<[event::Subscribe]>>(
+    stream: UnixStream,
+    events: E,
+) -> io::Result<I3Command<reply::Success, String, UnixStream>> {
+    run_msg_json(stream, msg::Msg::Subscribe, events.as_ref())
+}
+
+/// An easy-to-use subscribe, all you need to do is pass a runtime handle and a `Sender` half of a channel, then listen on
+/// the `rx` side for events
+pub fn subscribe(
+    rt: tokio::runtime::current_thread::Handle,
+    tx: Sender<event::Event>,
+    events: Vec<event::Subscribe>,
+) -> io::Result<()> {
+    let fut = I3::connect()?
+        .and_then(|stream: UnixStream| send_sub(stream, events).expect("failed to subscribe"))
+        .and_then(|(stream, _)| {
+            let framed = FramedRead::new(stream, codec::EventCodec);
+            let sender = framed
+                .for_each(move |evt| {
+                    let tx = tx.clone();
+                    tx.send(evt)
+                        .map(|_| ())
+                        .map_err(|e| io::Error::new(io::ErrorKind::BrokenPipe, e))
+                })
+                .map_err(|err| println!("{}", err));
+            tokio::spawn(sender);
+            Ok(())
+        })
+        .map(|_| ())
+        .map_err(|e| eprintln!("{:?}", e));
+
+    rt.spawn(fut);
+    Ok(())
+}
+
+
+#[cfg(test)]
+mod test {
+
+    use futures::{future, stream::Stream, sync::mpsc};
+    use i3ipc_types::event::{self, Subscribe};
+    use std::io;
+
+    use super::subscribe;
+    #[test]
+    fn test_sub() -> io::Result<()> {
+        let mut rt =
+            tokio::runtime::current_thread::Runtime::new().expect("Failed building runtime");
+        let (tx, rx) = mpsc::channel(5);
+        subscribe(rt.handle(), tx, vec![Subscribe::Window])?;
+        let fut = rx.for_each(|e: event::Event| {
+            println!("received");
+            println!("{:#?}", e);
+            future::ok(())
+        });
+        rt.spawn(fut);
+        rt.run().expect("failed runtime");
+        Ok(())
     }
 }

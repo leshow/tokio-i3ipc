@@ -13,7 +13,7 @@ fn main() -> io::Result<()> {
     // create a channel to receive responses
     let (tx, rx) = mpsc::channel(5);
     // pass a handle and `Sender` to `subscribe`
-    subscribe(rt.handle(), tx, &[Subscribe::Window])?;
+    subscribe(rt.handle(), tx, vec![Subscribe::Window])?;
     // handle the events received on the channel
     let fut = rx.for_each(|e: event::Event| {
         println!("received");
@@ -31,23 +31,23 @@ But all the tools are exported to build something like this yourself, interact w
 ```rust
 use tokio::codec::FramedRead;
 use tokio_uds::UnixStream;
+use tokio_i3ipc::{AsyncConnect, Subscribe, I3, EventCodec};
 
-use tokio_i3ipc::{AsyncConnect, read_msg_and, I3, EventCodec};
-
-fn run_subscribe() -> io::Result<()> {
-    let fut = I3::new()?
-        .and_then(move |stream| {
-            let buf = stream.encode_msg_json(Msg::Subscribe, events).unwrap(); // methods available on UnixStream thanks to the `AsyncI3IPC` trait
-            tokio::io::write_all(stream, buf)
-        })
-        .and_then(|(stream, _buf)| {
-            read_msg_and::<reply::Success, _>(stream) // decodes a single msg from i3 and passes along the stream
-        })
-        .and_then(move |(stream, _)| {
+pub fn subscribe(
+    rt: tokio::runtime::current_thread::Handle,
+    tx: Sender<event::Event>,
+    events: Vec<Subscribe>,
+) -> io::Result<()> {
+    let fut = I3::connect()?
+        .and_then(|stream: UnixStream| send_sub(stream, events).expect("failed to subscribe"))
+        .and_then(|(stream, _)| {
             let framed = FramedRead::new(stream, EventCodec);
             let sender = framed
                 .for_each(move |evt| {
-                    // do something with the events
+                    let tx = tx.clone();
+                    tx.send(evt)
+                        .map(|_| ())
+                        .map_err(|e| io::Error::new(io::ErrorKind::BrokenPipe, e))
                 })
                 .map_err(|err| println!("{}", err));
             tokio::spawn(sender);
@@ -56,7 +56,8 @@ fn run_subscribe() -> io::Result<()> {
         .map(|_| ())
         .map_err(|e| eprintln!("{:?}", e));
 
-    tokio::spawn(fut);
+    rt.spawn(fut);
+    Ok(())
 }
 ```
 
@@ -77,3 +78,26 @@ pub fn get_outputs() -> io::Result<()> {
 ```
 
 `run_msg` and `run_msg_payload` implement `Future` and do a send/receive operation, the latter with an accompanying payload. These operations send a message to i3 and decode a response that you specify
+
+## Sending Messages to i3
+
+To [send messages](https://i3wm.org/docs/ipc.html#_sending_messages_to_i3) to i3, there are a number of convenience futures that need only be passed a `UnixStream` and then run in your event loop.
+
+```rust
+use tokio_i3ipc::{I3, Connect, get, reply};
+
+  I3::connect()
+        .expect("unable to get socket")
+        .and_then(|stream: UnixStream| get::get_workspaces(stream))
+        .and_then(|(_stream, reply: reply::Workspaces)| {
+            // do something w/ reply::Workspaces
+        })
+```
+
+The definition of `get_workspaces` is literally just:
+
+```rust
+run_msg::<S, D>(stream, Msg::Workspaces) where S: AsyncI3IPC, D: DeserializeOwned
+```
+
+So you could write this yourself very easily.

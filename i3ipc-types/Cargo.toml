@@ -3,6 +3,11 @@ name = "i3ipc-types"
 version = "0.3.0"
 authors = ["Evan Cameron <cameron.evan@gmail.com>"]
 edition = "2018"
+license = "MIT"
+readme = "README.md"
+keywords = ["i3", "ipc", "protocol", "json", "serde"]
+categories = ["api-bindings", "parsing", "command-line-utilities", "gui"]
+repository = "https://github.com/leshow/tokio-i3ipc/tree/master/i3ipc-types"
 
 [dependencies]
 serde = "1.0"

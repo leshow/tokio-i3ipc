@@ -1,3 +1,6 @@
+//! Crate contains types and implementations for communicating with i3.
+//! Also contained is protocol level communication using `io::Read` and `Write`
+//!
 use serde::{de::DeserializeOwned, Serialize};
 
 use std::{env, io, process::Command};
@@ -6,6 +9,7 @@ pub mod event;
 pub mod msg;
 pub mod reply;
 
+/// Types implementing this are provided a connect function and return a stream
 pub trait Connect {
     type Stream: I3IPC;
     fn connect() -> io::Result<Self::Stream>;
@@ -13,6 +17,7 @@ pub trait Connect {
 
 pub const MAGIC: &str = "i3-ipc";
 
+/// Trait containing methods to encode and decode message from i3
 pub trait I3IPC: io::Read + io::Write {
     const MAGIC: &'static str = MAGIC;
 
@@ -80,14 +85,21 @@ pub trait I3IPC: io::Read + io::Write {
     }
 }
 
+// Any type which brings `I3IPC` into scope and implements Read and Write gets
+// the protocol implemented for free
 impl<T: io::Read + io::Write> I3IPC for T {}
 
+/// Instead of returning an enum, we're returning a struct containing the `Msg` type
+/// and some body. An advantage to this over the enum method is that there is no minimum
+/// memory size that we must have. This is helpful when some variants are very large compared
+/// to others, as in the case of say `reply::Node` vs `reply::Config`
 #[derive(Debug)]
 pub struct MsgResponse<D> {
     pub msg_type: msg::Msg,
     pub body: D,
 }
 
+/// `MsgResponse` is valid for anything which can be deserialized with serde
 impl<D: DeserializeOwned> MsgResponse<D> {
     pub fn new(msg_type: u32, buf: Vec<u8>) -> io::Result<Self> {
         Ok(MsgResponse {
@@ -97,6 +109,7 @@ impl<D: DeserializeOwned> MsgResponse<D> {
     }
 }
 
+/// get socket path from i3
 pub fn socket_path() -> io::Result<String> {
     if let Ok(p) = env::var("I3SOCK") {
         return Ok(p);
@@ -112,6 +125,7 @@ pub fn socket_path() -> io::Result<String> {
     }
 }
 
+/// Given an event type and payload this function will deserialze the proper struct
 pub fn decode_event<P>(evt_type: u32, payload: P) -> io::Result<event::Event>
 where
     P: AsRef<[u8]>,

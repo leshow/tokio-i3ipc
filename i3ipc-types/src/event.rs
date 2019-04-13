@@ -1,3 +1,5 @@
+//! For subscribing and receiving events
+//!
 use serde_derive::{Deserialize, Serialize};
 
 use crate::reply;

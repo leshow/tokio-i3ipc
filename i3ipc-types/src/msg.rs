@@ -1,3 +1,4 @@
+//! For sending messages to i3
 #[derive(Eq, PartialEq, Hash, Debug, Clone, Copy)]
 pub enum Msg {
     RunCommand,

@@ -1,14 +1,17 @@
+//! Contains structs for deserializing messages from i3
 use serde_derive::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use std::collections::HashMap;
 
+/// Generic success reply
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
 pub struct Success {
     pub success: bool,
     pub error: Option<String>,
 }
 
+/// Workspaces reply
 pub type Workspaces = Vec<Workspace>;
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
@@ -22,6 +25,7 @@ pub struct Workspace {
     pub output: String,
 }
 
+/// Outputs reply
 pub type Outputs = Vec<Output>;
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
@@ -33,7 +37,7 @@ pub struct Output {
     pub rect: Rect,
 }
 
-/// Node reply
+/// Tree/Node reply
 #[derive(Deserialize, Serialize, PartialEq, Clone, Debug)]
 // TODO manually impl Eq
 pub struct Node {

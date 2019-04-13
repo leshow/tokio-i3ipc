@@ -3,6 +3,11 @@ name = "tokio-i3ipc"
 version = "0.1.0"
 authors = ["Evan Cameron <cameron.evan@gmail.com>"]
 edition = "2018"
+description = """
+Bindings for i3 and tokio allowing async applications to communicate with i3 over
+it's IPC interface. Contains futures implementations and convenience functions
+for working with i3.
+"""
 categories = ["api-bindings", "asynchronous", "parsing", "gui"]
 license = "MIT"
 readme = "README.md"

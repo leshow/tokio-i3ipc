@@ -2,6 +2,10 @@
 name = "i3ipc-types"
 version = "0.3.0"
 authors = ["Evan Cameron <cameron.evan@gmail.com>"]
+description = """
+Library containing all the types needed to communicate with i3, along with their serde implementations 
+and implementations of many std traits
+"""
 edition = "2018"
 license = "MIT"
 readme = "README.md"

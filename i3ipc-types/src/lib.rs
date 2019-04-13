@@ -128,7 +128,6 @@ where
         Subscribe::Mode => {
             Event::Mode(serde_json::from_slice::<event::ModeData>(payload.as_ref())?)
         }
-
         Subscribe::Window => Event::Window(Box::new(serde_json::from_slice::<event::WindowData>(
             payload.as_ref(),
         )?)),

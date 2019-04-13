@@ -7,7 +7,7 @@ A synchronous i3 IPC library. For async see [tokio-i3ipc](https://github.com/les
 Subscribing to events is easy:
 
 ```rust
-use i3ipc_sync::{
+use i3_ipc::{
     event::{Event, Subscribe},
     I3Stream,
 };
@@ -36,7 +36,7 @@ fn main() -> io::Result<()> {
 Getting information is equally easy, use any `get_*` method or `run_command` to send a message to i3:
 
 ```rust
-use i3ipc_sync::{Connect, I3};
+use i3_ipc::{Connect, I3};
 use std::io;
 
 fn main() -> io::Result<()> {

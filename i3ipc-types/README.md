@@ -1,6 +1,6 @@
 # i3ipc-types
 
-[![Crate](https://img.shields.io/crates/v/i3ipc-types.svg)](https://crates.io/crates/3ipc-types)
+[![Crate](https://img.shields.io/crates/v/i3ipc-types.svg)](https://crates.io/crates/i3ipc-types)
 [![API](https://docs.rs/i3ipc-types/badge.svg)](https://docs.rs/i3ipc-types)
 
 This crate includes all the types for interacting with [i3ipc](https://i3wm.org/docs/ipc.html), along with some undocumented properties I found by browsing i3's source code.

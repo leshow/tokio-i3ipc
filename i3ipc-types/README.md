@@ -1,5 +1,8 @@
 # i3ipc-types
 
+[![Crate](https://img.shields.io/crates/v/i3ipc-types.svg)](https://crates.io/crates/3ipc-types)
+[![API](https://docs.rs/i3ipc-types/badge.svg)](https://docs.rs/i3ipc-types)
+
 This crate includes all the types for interacting with [i3ipc](https://i3wm.org/docs/ipc.html), along with some undocumented properties I found by browsing i3's source code.
 
 This crate includes the definitions for all i3 ipc message responses, event types, and serialize/deserialize implementations using `serde`. Additionally, I've included traits with default implementations for encoding and decoding for speaking i3's ipc protocol, so long as the type has implemented `io::Read` and `io::Write`.

@@ -1,5 +1,8 @@
 # i3-ipc (synchronous)
 
+[![Crate](https://img.shields.io/crates/v/i3_ipc.svg)](https://crates.io/crates/i3_ipc)
+[![API](https://docs.rs/i3_ipc/badge.svg)](https://docs.rs/i3_ipc)
+
 A synchronous i3 IPC library. For async see [tokio-i3ipc](https://github.com/leshow/tokio-i3ipc).
 
 ## Subscribe

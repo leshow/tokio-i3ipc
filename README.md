@@ -1,5 +1,9 @@
 # tokio-i3ipc
 
+[![Build Status](https://travis-ci.com/leshow/tokio-i3ipc.svg?branch=master)](https://travis-ci.com/leshow/tokio-i3ipc)
+[![Crate](https://img.shields.io/crates/v/tokio-i3ipc.svg)](https://crates.io/crates/tokio-i3ipc)
+[![API](https://docs.rs/tokio-i3ipc/badge.svg)](https://docs.rs/tokio-i3ipc)
+
 This crate provides types and functions for working with i3's IPC protocol within tokio. It re-exports the subcrate `i3ipc-types` because it is also used for a synchronous version of the code.
 
 There are many ways you cna interact with this library. You can import an already written future and simply spawn/run it, or you can use the building blocks to construct your own futures.

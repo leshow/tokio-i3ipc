@@ -35,7 +35,7 @@ But all the tools are exported to build something like this yourself, interact w
 ```rust
 use tokio::codec::FramedRead;
 use tokio_uds::UnixStream;
-use tokio_i3ipc::{AsyncConnect, Subscribe, I3, EventCodec};
+use tokio_i3ipc::{AsyncConnect, event::{self, Subscribe}, I3, EventCodec};
 
 pub fn subscribe(
     rt: tokio::runtime::current_thread::Handle,

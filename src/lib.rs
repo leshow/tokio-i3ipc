@@ -4,13 +4,12 @@ pub mod codec;
 pub mod get;
 
 use futures::prelude::*;
-use futures::{future, sync::mpsc::Sender, try_ready, Async, Future, Poll, };
+use futures::{future, sync::mpsc::Sender, try_ready, Async, Future, Poll};
 use serde::{de::DeserializeOwned, Serialize};
 use std::{io, marker::PhantomData};
 use tokio::codec::FramedRead;
 use tokio::io::{self as tio, AsyncRead, AsyncWrite};
 use tokio_uds::{ConnectFuture, UnixStream};
-
 
 /// Newtype wrapper for `ConnectFuture` meant to resolve some Stream, mostly likely `UnixStream`
 #[derive(Debug)]
@@ -88,9 +87,7 @@ where
             panic!("Magic str not received");
         }
         let payload_len = u32::from_ne_bytes([init[6], init[7], init[8], init[9]]) as usize;
-        dbg!(payload_len);
         let msg_type = u32::from_ne_bytes([init[10], init[11], init[12], init[13]]);
-        dbg!(msg_type);
         let mut buf = vec![0_u8; payload_len];
         let (_rdr, payload) = try_ready!(tio::read_exact(rd, &mut buf).poll());
 
@@ -180,6 +177,7 @@ where
 pub struct I3Command<D, P = String, S = UnixStream> {
     msg: msg::Msg,
     payload: Option<P>,
+    // stream: S,
     state: State<S, Option<MsgResponse<D>>>,
     _marker: PhantomData<D>,
 }
@@ -201,9 +199,9 @@ where
                 let msg = self.msg;
                 let payload = self.payload.take();
                 let send = stream._encode_msg(msg, payload);
-                let (stream, _size) = try_ready!(tio::write_all(stream, send).poll());
-
-                let msg = try_ready!(read_msg::<D, _>(stream).poll());
+                let (rdr, wtr) = stream.split();
+                let (_strm, _size) = try_ready!(tio::write_all(wtr, send).poll());
+                let (s, msg) = try_ready!(read_msg_and::<D, _>(rdr).poll());
                 *resp = Some(msg);
             }
             State::Empty => panic!("poll a ReadExact after it's done"),
@@ -228,6 +226,7 @@ where
     I3Command {
         msg,
         payload,
+        // stream,
         state: State::Reading { stream, resp: None },
         _marker: PhantomData,
     }
@@ -279,7 +278,6 @@ where
             panic!("Magic str not received");
         }
         let payload_len = u32::from_ne_bytes([init[6], init[7], init[8], init[9]]) as usize;
-        dbg!(payload_len);
         let msg_type = u32::from_ne_bytes([init[10], init[11], init[12], init[13]]);
 
         let buf = vec![0; payload_len];
@@ -316,9 +314,19 @@ pub fn send_sub<E: AsRef<[event::Subscribe]>>(
     stream: UnixStream,
     events: E,
 ) -> io::Result<I3Command<reply::Success, String, UnixStream>> {
-    run_msg_json(stream, msg::Msg::Subscribe, events.as_ref())
+    run_msg_json(stream, msg::Msg::Subscribe, events.as_ref()) // can't seem to get this to work w/ read & write in same Future
 }
 
+pub fn send_sub_fut<E: AsRef<[event::Subscribe]>>(
+    stream: UnixStream,
+    events: E,
+) -> impl Future<Item = (UnixStream, MsgResponse<reply::Success>), Error = io::Error> {
+    let buf = stream
+        .encode_msg_json(msg::Msg::Subscribe, events.as_ref())
+        .unwrap();
+    tokio::io::write_all(stream, buf)
+        .and_then(|(stream, _)| read_msg_and::<reply::Success, _>(stream))
+}
 /// An easy-to-use subscribe, all you need to do is pass a runtime handle and a `Sender` half of a channel, then listen on
 /// the `rx` side for events
 pub fn subscribe(
@@ -327,8 +335,9 @@ pub fn subscribe(
     events: Vec<event::Subscribe>,
 ) -> io::Result<()> {
     let fut = I3::connect()?
-        .and_then(|stream: UnixStream| send_sub(stream, events).expect("failed to subscribe"))
-        .and_then(|(stream, _)| {
+        // .and_then(|stream: UnixStream| send_sub(stream, events).expect("failed to subscribe"))
+        .and_then(|stream| send_sub_fut(stream, events))
+        .and_then(|(stream, _r)| {
             let framed = FramedRead::new(stream, codec::EventCodec);
             let sender = framed
                 .for_each(move |evt| {
@@ -347,7 +356,6 @@ pub fn subscribe(
     rt.spawn(fut);
     Ok(())
 }
-
 
 #[cfg(test)]
 mod test {

@@ -29,3 +29,6 @@ members = ["./", "i3-ipc", "i3ipc-types"]
 [[example]]
 name = "subscribe"
 path = "examples/subscribe.rs"
+
+[features]
+nightly = []

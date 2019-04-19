@@ -1,4 +1,8 @@
-// re-export i3ipc-types so users only have to import 1 thing
+#![cfg_attr(feature = "nightly", feature(external_doc))]
+#[cfg(feature = "nightly")]
+#[doc(include = "../README.md")]
+type _READMETEST = ();
+
 pub use i3ipc_types::*;
 pub mod codec;
 pub mod get;

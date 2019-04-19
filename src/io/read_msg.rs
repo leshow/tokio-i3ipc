@@ -44,7 +44,6 @@ where
         let msg_type = u32::from_ne_bytes([init[10], init[11], init[12], init[13]]);
         let mut buf = vec![0_u8; payload_len];
         let (_rdr, payload) = try_ready!(tio::read_exact(rd, &mut buf).poll());
-        dbg!(String::from_utf8(payload.to_vec()).unwrap());
 
         Ok(Async::Ready(MsgResponse {
             msg_type: msg_type.into(),

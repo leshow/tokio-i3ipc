@@ -35,15 +35,15 @@ But all the tools are exported to build something like this yourself, interact w
 ```rust
 use tokio::codec::FramedRead;
 use tokio_uds::UnixStream;
-use tokio_i3ipc::{AsyncConnect, event::{self, Subscribe}, I3, EventCodec};
+use tokio_i3ipc::{AsyncConnect, subscribe_future, event, I3, EventCodec};
 
 pub fn subscribe(
     rt: tokio::runtime::current_thread::Handle,
     tx: Sender<event::Event>,
-    events: Vec<Subscribe>,
+    events: Vec<event::Subscribe>,
 ) -> io::Result<()> {
     let fut = I3::connect()?
-        .and_then(|stream: UnixStream| send_sub(stream, events).expect("failed to subscribe"))
+        .and_then(|stream: UnixStream| subscribe_future(stream, events).expect("failed to subscribe"))
         .and_then(|(stream, _)| {
             let framed = FramedRead::new(stream, EventCodec);
             let sender = framed
@@ -65,12 +65,14 @@ pub fn subscribe(
 }
 ```
 
-Another example, getting all outputs from i3:
+Another example, getting all displays from i3:
 
 ```rust
-pub fn get_outputs() -> io::Result<()> {
+use tokio_i3ipc::{get, I3};
+
+pub fn get_displays() -> io::Result<()> {
     let fut = I3::connect()?
-        .and_then(|stream: UnixStream| run_msg::<reply::Outputs, _>(stream, Msg::Outputs))
+        .and_then(get::get_outputs)
         .and_then(|resp| {
             dbg!(resp);
             Ok(())
@@ -81,7 +83,20 @@ pub fn get_outputs() -> io::Result<()> {
 }
 ```
 
-`run_msg` and `run_msg_payload` implement `Future` and do a send/receive operation, the latter with an accompanying payload. These operations send a message to i3 and decode a response that you specify
+or, you could write `get_outputs` yourself:
+
+```rust
+use tokio_uds::UnixStream;
+use tokio_i3ipc::{reply, msg, event, io as i3io};
+
+pub fn get_outputs(
+    stream: UnixStream,
+) -> impl Future<Item = (UnixStream, MsgResponse<reply::Outputs>), Error = io::Error> {
+    i3io::send_msg(stream, Msg::Outputs).and_then(i3io::read_msg_and)
+}
+```
+
+`send_msg`, `write_msg_json` and `write_msg` will handle writing to i3. `read_msg` and `read_msg_and` will handle reading. The latter returns the stream again to continue using it.
 
 ## Sending Messages to i3
 
@@ -92,16 +107,8 @@ use tokio_i3ipc::{I3, Connect, get, reply};
 
   I3::connect()
         .expect("unable to get socket")
-        .and_then(|stream: UnixStream| get::get_workspaces(stream))
+        .and_then(get::get_workspaces)
         .and_then(|(_stream, reply: reply::Workspaces)| {
             // do something w/ reply::Workspaces
         })
 ```
-
-The definition of `get_workspaces` is literally just:
-
-```rust
-run_msg::<S, D>(stream, Msg::Workspaces) where S: AsyncI3IPC, D: DeserializeOwned
-```
-
-So you could write this yourself very easily.

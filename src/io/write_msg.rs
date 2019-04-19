@@ -73,9 +73,7 @@ where
             } => {
                 let buf = buf.as_ref();
                 let send = stream._encode_msg(self.msg, buf);
-                dbg!(&send);
                 let (_strm, _size) = try_ready!(tio::write_all(stream, send).poll());
-                println!("sent");
             }
             StateW::Empty => panic!("poll a WriteAll after it's done"),
         }

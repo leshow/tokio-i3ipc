@@ -99,7 +99,7 @@ where
     decode_response(stream, decode_event)
 }
 
-pub fn subscribe_f<E: AsRef<[event::Subscribe]>>(
+pub fn subscribe_future<E: AsRef<[event::Subscribe]>>(
     stream: UnixStream,
     events: E,
 ) -> impl Future<Item = (UnixStream, MsgResponse<reply::Success>), Error = stio::Error> {
@@ -120,11 +120,9 @@ pub fn subscribe(
         })
         .and_then(i3io::read_msg_and::<reply::Success, _>)
         .and_then(|(stream, _r)| {
-            dbg!(_r);
             let framed = FramedRead::new(stream, codec::EventCodec);
             let sender = framed
                 .for_each(move |evt| {
-                    dbg!(&evt);
                     let tx = tx.clone();
                     tx.send(evt)
                         .map(|_| ())

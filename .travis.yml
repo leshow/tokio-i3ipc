@@ -12,6 +12,10 @@ before_install:
     cargo clippy --version;
     fi
 
+matrix:
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
 
 cache:
   cargo: true

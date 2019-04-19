@@ -11,6 +11,16 @@ There are many ways you cna interact with this library. You can import an alread
 I expect the most common use case will be to subscribe to some events and listen over a channel:
 
 ```rust
+use futures::{
+    future,
+    sink::Sink,
+    stream::Stream,
+    sync::mpsc::{self, Sender},
+    Future,
+};
+use std::io;
+use tokio_i3ipc::{subscribe, event::{self, Subscribe}};
+
 fn main() -> io::Result<()> {
     let mut rt =
         tokio::runtime::current_thread::Runtime::new().expect("Failed building runtime");
@@ -35,7 +45,10 @@ But all the tools are exported to build something like this yourself, interact w
 ```rust
 use tokio::codec::FramedRead;
 use tokio_uds::UnixStream;
-use tokio_i3ipc::{AsyncConnect, subscribe_future, event, I3, EventCodec};
+use futures::{future::Future, stream::Stream, sink::Sink, sync::mpsc::Sender};
+use std::io;
+
+use tokio_i3ipc::{Connect, subscribe_future, event, I3, codec::EventCodec};
 
 pub fn subscribe(
     rt: tokio::runtime::current_thread::Handle,
@@ -43,7 +56,7 @@ pub fn subscribe(
     events: Vec<event::Subscribe>,
 ) -> io::Result<()> {
     let fut = I3::connect()?
-        .and_then(|stream: UnixStream| subscribe_future(stream, events).expect("failed to subscribe"))
+        .and_then(|stream: UnixStream| subscribe_future(stream, events))
         .and_then(|(stream, _)| {
             let framed = FramedRead::new(stream, EventCodec);
             let sender = framed
@@ -68,7 +81,9 @@ pub fn subscribe(
 Another example, getting all displays from i3:
 
 ```rust
-use tokio_i3ipc::{get, I3};
+use std::io;
+use futures::future::Future;
+use tokio_i3ipc::{get, I3, Connect};
 
 pub fn get_displays() -> io::Result<()> {
     let fut = I3::connect()?
@@ -87,7 +102,9 @@ or, you could write `get_outputs` yourself:
 
 ```rust
 use tokio_uds::UnixStream;
-use tokio_i3ipc::{reply, msg, event, io as i3io};
+use futures::future::Future;
+use std::io;
+use tokio_i3ipc::{reply, msg::Msg, MsgResponse, event, io as i3io};
 
 pub fn get_outputs(
     stream: UnixStream,
@@ -103,12 +120,23 @@ pub fn get_outputs(
 To [send messages](https://i3wm.org/docs/ipc.html#_sending_messages_to_i3) to i3, there are a number of convenience futures that need only be passed a `UnixStream` and then run in your event loop.
 
 ```rust
-use tokio_i3ipc::{I3, Connect, get, reply};
+use futures::future::Future;
+use tokio_uds::UnixStream;
+use tokio;
+use tokio_i3ipc::{I3, Connect, MsgResponse, get, reply};
 
-  I3::connect()
+fn main() {
+    let fut = I3::connect()
         .expect("unable to get socket")
         .and_then(get::get_workspaces)
-        .and_then(|(_stream, reply: reply::Workspaces)| {
-            // do something w/ reply::Workspaces
-        })
+        .and_then(
+            |(_stream, reply): (UnixStream, MsgResponse<reply::Workspaces>)| {
+                // do something w/ reply::Workspaces
+                futures::future::ok(())
+            },
+        )
+        .map(|_| ())
+        .map_err(|_| ());
+    tokio::run(fut);
+}
 ```

@@ -4,10 +4,11 @@
 //!
 //! While the protocol technically can work over any `AsyncRead`+`AsyncWrite`, in reality it's only
 //! implemented for `UnixStream`. So all the types are monomorphized here. However, if you need access
-//! just use `lib::run_msg` and `lib::run_msg_payload` (sends payload along with message).
+//! just use `io::write_msg` and `io::write_msg_json` (sends json payload along with message).
+use futures::Future;
 use tokio_uds::UnixStream;
 
-use crate::*;
+use crate::{io as i3io, *};
 use i3ipc_types::{msg::Msg, reply, MsgResponse};
 
 use std::io;

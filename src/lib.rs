@@ -128,39 +128,13 @@ pub fn subscribe(
                         .map(|_| ())
                         .map_err(|e| stio::Error::new(stio::ErrorKind::BrokenPipe, e))
                 })
-                .map_err(|err| println!("{}", err));
+                .map_err(|err| eprintln!("{}", err));
             tokio::spawn(sender);
             Ok(())
         })
         .map(|_| ())
         .map_err(|e| eprintln!("{:?}", e));
 
-    rt.spawn(fut);
+    rt.spawn(fut).expect("failed to spawn");
     Ok(())
-}
-
-#[cfg(test)]
-mod test {
-
-    use futures::{future, stream::Stream, sync::mpsc};
-    use i3ipc_types::event::{self, Subscribe};
-    use std::io;
-
-    use super::subscribe;
-    #[test]
-    fn test_sub() -> io::Result<()> {
-        println!("starting");
-        let mut rt =
-            tokio::runtime::current_thread::Runtime::new().expect("Failed building runtime");
-        let (tx, rx) = mpsc::channel(5);
-        subscribe(rt.handle(), tx, vec![Subscribe::Window])?;
-        let fut = rx.for_each(|e: event::Event| {
-            println!("received");
-            println!("{:#?}", e);
-            future::ok(())
-        });
-        rt.spawn(fut);
-        rt.run().expect("failed runtime");
-        Ok(())
-    }
 }

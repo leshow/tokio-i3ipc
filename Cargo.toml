@@ -25,3 +25,7 @@ i3ipc-types = { version = "0.3", path = "i3ipc-types" }
 
 [workspace]
 members = ["./", "i3-ipc", "i3ipc-types"]
+
+[[example]]
+name = "subscribe"
+path = "examples/subscribe.rs"

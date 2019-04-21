@@ -6,9 +6,8 @@ use serde::de::DeserializeOwned;
 use std::io as stio;
 use tokio::codec::FramedRead;
 use tokio::io::{self as tio, AsyncRead};
-use tokio_uds::UnixStream;
 
-/// Convenience function that decodes a single response and passes the type and buffer to a closure
+/// Convenience function that decodes a single response and passes the type and undecoded buffer to a closure
 pub fn decode_response<F, T, S>(stream: S, f: F) -> impl Future<Item = (S, T), Error = stio::Error>
 where
     F: Fn(u32, Vec<u8>) -> T,
@@ -28,7 +27,7 @@ where
     })
 }
 
-/// Convenience function that uses `decode_response`, formatting the reply in a `MsgResponse`
+/// Decode a response into a [MsgResponse](struct.MsgResponse.html)
 pub fn decode_msg<D, S>(
     stream: S,
 ) -> impl Future<Item = (S, stio::Result<MsgResponse<D>>), Error = stio::Error>
@@ -39,8 +38,8 @@ where
     decode_response(stream, MsgResponse::new)
 }
 
-/// Convenience function that returns the result in `Event` format
-pub fn decode_event_fut<D, S>(
+/// Decode a response into an [Event](event/enum.Event.html)
+pub fn decode_event_future<D, S>(
     stream: S,
 ) -> impl Future<Item = (S, stio::Result<event::Event>), Error = stio::Error>
 where
@@ -50,14 +49,21 @@ where
     decode_response(stream, decode_event)
 }
 
-pub fn subscribe_future<E: AsRef<[event::Subscribe]>>(
-    stream: UnixStream,
+/// Function returns a Future that will send a [Subscribe](event/enum.Subscribe.html) to i3 along with the events to listen to.
+/// Is bounded by [AsyncI3IPC](trait.AsyncI3IPC.html) but you should almost always use `UnixStream`
+pub fn subscribe_future<S, E>(
+    stream: S,
     events: E,
-) -> impl Future<Item = (UnixStream, MsgResponse<reply::Success>), Error = stio::Error> {
+) -> impl Future<Item = (S, MsgResponse<reply::Success>), Error = stio::Error>
+where
+    S: AsyncI3IPC,
+    E: AsRef<[event::Subscribe]>,
+{
     i3io::write_msg_json(stream, msg::Msg::Subscribe, events.as_ref())
         .expect("Encoding failed")
         .and_then(i3io::read_msg_and::<reply::Success, _>)
 }
+
 /// An easy-to-use subscribe, all you need to do is pass a runtime handle and a `Sender` half of a channel, then listen on
 /// the `rx` side for events
 pub fn subscribe(

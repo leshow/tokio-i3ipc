@@ -30,6 +30,7 @@ where
     }
 }
 
+/// A future which can be used to write a [Msg](msg/enum.Msg.html) from i3 -- sending a buffer
 pub fn write_msg<T, S>(stream: S, msg: msg::Msg, buf: T) -> I3WriteMsg<T, S>
 where
     S: AsyncI3IPC,
@@ -38,6 +39,7 @@ where
     _write_msg(stream, msg, Some(buf))
 }
 
+/// A future which can be used to write a [Msg](msg/enum.Msg.html) from i3 (that sends no data)
 pub fn send_msg<S>(stream: S, msg: msg::Msg) -> I3WriteMsg<String, S>
 where
     S: AsyncI3IPC,
@@ -45,6 +47,7 @@ where
     _write_msg::<String, S>(stream, msg, None)
 }
 
+/// A future which can be used to write a [Msg](msg/enum.Msg.html) from i3 -- sending some json data
 pub fn write_msg_json<T, S>(
     stream: S,
     msg: msg::Msg,

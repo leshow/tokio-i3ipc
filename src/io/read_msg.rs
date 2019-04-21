@@ -52,6 +52,21 @@ where
     }
 }
 
+/// A future which can be used to read a message from i3 (doesn't return a stream)
+/// Created by the [read_msg](fn.read_msg.html) function.
+/// For example:
+/// ```rust
+/// # use tokio_uds::UnixStream;
+/// # use futures::future::Future;
+/// # use std::io;
+/// # use tokio_i3ipc::{reply, msg::Msg, MsgResponse, event, io as i3io};
+///
+/// pub fn get_outputs(
+///     stream: UnixStream,
+/// ) -> impl Future<Item = (UnixStream, MsgResponse<reply::Outputs>), Error = io::Error> {
+///     i3io::send_msg(stream, Msg::Outputs).and_then(i3io::read_msg_and)
+/// }
+/// ```
 pub fn read_msg<D, S>(stream: S) -> I3Msg<D, S>
 where
     S: AsyncRead,

@@ -1,3 +1,42 @@
+//! Implements tokio_codec's `Decoder` trait to read [event::Event](../event/enum.Event.html) from i3. Used for subscribe
+//!
+//! Using `EventCodec` to subscribe to some events:
+//!
+//! ```rust
+//! # use tokio::codec::FramedRead;
+//! # use tokio_uds::UnixStream;
+//! # use futures::{future::Future, stream::Stream, sink::Sink, sync::mpsc::Sender};
+//! # use std::io;
+//!
+//! use tokio_i3ipc::{Connect, subscribe_future, event, I3, codec::EventCodec};
+//!
+//! pub fn subscribe(
+//!     rt: tokio::runtime::current_thread::Handle,
+//!     tx: Sender<event::Event>,
+//!     events: Vec<event::Subscribe>,
+//! ) -> io::Result<()> {
+//!     let fut = I3::connect()?
+//!         .and_then(|stream: UnixStream| subscribe_future(stream, events))
+//!         .and_then(|(stream, _)| {
+//!             let framed = FramedRead::new(stream, EventCodec);
+//!             let sender = framed
+//!                 .for_each(move |evt| {
+//!                     let tx = tx.clone();
+//!                     tx.send(evt)
+//!                         .map(|_| ())
+//!                         .map_err(|e| io::Error::new(io::ErrorKind::BrokenPipe, e))
+//!                 })
+//!                 .map_err(|err| println!("{}", err));
+//!             tokio::spawn(sender);
+//!             Ok(())
+//!         })
+//!         .map(|_| ())
+//!         .map_err(|e| eprintln!("{:?}", e));
+//!
+//!     rt.spawn(fut);
+//!     Ok(())
+//! }
+//! ```
 use bytes::BytesMut;
 use tokio::codec::Decoder;
 

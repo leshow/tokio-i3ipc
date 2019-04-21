@@ -92,7 +92,7 @@ impl<T: io::Read + io::Write> I3IPC for T {}
 /// Instead of returning an enum, we're returning a struct containing the `Msg` type
 /// and some body. An advantage to this over the enum method is that there is no minimum
 /// memory size that we must have. This is helpful when some variants are very large compared
-/// to others, as in the case of say `reply::Node` vs `reply::Config`
+/// to others, as in the case of say [reply::Node](reply/struct.Node.html) vs [reply::Config](reply/struct.Config.html)
 #[derive(Debug)]
 pub struct MsgResponse<D> {
     pub msg_type: msg::Msg,
@@ -125,7 +125,7 @@ pub fn socket_path() -> io::Result<String> {
     }
 }
 
-/// Given an event type and payload this function will deserialze the proper struct
+/// Given an event type and payload this function will deserialize the proper struct
 pub fn decode_event<P>(evt_type: u32, payload: P) -> io::Result<event::Event>
 where
     P: AsRef<[u8]>,

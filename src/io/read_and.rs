@@ -55,6 +55,8 @@ where
     }
 }
 
+/// A future which can be used to read a message from i3
+/// Created by the [read_msg_and](fn.read_msg_and.html) function
 pub fn read_msg_and<D, S>(stream: S) -> I3MsgAnd<D, S>
 where
     S: AsyncRead,

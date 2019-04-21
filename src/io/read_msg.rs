@@ -55,7 +55,7 @@ where
 /// A future which can be used to read a message from i3 (doesn't return a stream)
 /// Created by the [read_msg](fn.read_msg.html) function.
 /// For example:
-/// ```should_panic
+/// ```rust
 /// # use tokio_uds::UnixStream;
 /// # use futures::future::Future;
 /// # use std::io;

@@ -2,7 +2,7 @@
 //!
 //! Using `EventCodec` to subscribe to some events:
 //!
-//! ```should_panic
+//! ```rust
 //! # use tokio::codec::FramedRead;
 //! # use tokio_uds::UnixStream;
 //! # use futures::{future::Future, stream::Stream, sink::Sink, sync::mpsc::Sender};

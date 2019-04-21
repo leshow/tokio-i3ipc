@@ -33,6 +33,3 @@ path = "examples/subscribe.rs"
 [[example]]
 name = "manual_sub"
 path = "examples/manual_sub.rs"
-
-[features]
-nightly = []

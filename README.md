@@ -1,4 +1,4 @@
-# tokio-i3ipc (pre-release)
+# tokio-i3ipc
 
 [![Build Status](https://travis-ci.com/leshow/tokio-i3ipc.svg?branch=master)](https://travis-ci.com/leshow/tokio-i3ipc)
 [![Crate](https://img.shields.io/crates/v/tokio-i3ipc.svg)](https://crates.io/crates/tokio-i3ipc)

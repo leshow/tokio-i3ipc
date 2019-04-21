@@ -11,7 +11,7 @@ for working with i3.
 categories = ["api-bindings", "asynchronous", "parsing", "gui"]
 license = "MIT"
 readme = "README.md"
-keywords = ["i3", "ipc", "tokio", "async", "protocol", "json", "serde"]
+keywords = ["i3", "ipc", "tokio", "async", "protocol"]
 repository = "https://github.com/leshow/tokio-i3ipc"
 
 [dependencies]

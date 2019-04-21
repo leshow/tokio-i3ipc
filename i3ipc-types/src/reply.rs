@@ -53,7 +53,7 @@ pub struct Node {
     pub window_rect: Rect,
     pub deco_rect: Rect,
     pub geometry: Rect,
-    pub window_properties: Option<HashMap<WindowProperty, String>>,
+    pub window_properties: Option<HashMap<WindowProperty, Option<String>>>,
     pub urgent: bool,
     pub focused: bool,
     pub focus: Vec<i64>,

@@ -6,7 +6,7 @@
 //!
 //! # Subscribing
 //!
-//! ```rust
+//! ```should_panic
 //! # use futures::{
 //! #     future,
 //! #     sink::Sink,
@@ -42,7 +42,7 @@
 //!
 //! To [send messages](https://i3wm.org/docs/ipc.html#_sending_messages_to_i3) to i3, there are a number of convenience futures that need only be passed a `UnixStream` and then run in your event loop.
 //!
-//! ```rust
+//! ```should_panic
 //! # use futures::future::Future;
 //! # use tokio_uds::UnixStream;
 //! # use tokio;

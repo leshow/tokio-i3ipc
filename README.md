@@ -140,3 +140,8 @@ fn main() {
     tokio::run(fut);
 }
 ```
+
+
+### "Real world" example
+
+I have a fork of an i3 window-logging application that uses `tokio-i3ipc` (https://github.com/leshow/i3-tracker-rs/). The tracker subscribes to window events and logs how much time is spent on each node.

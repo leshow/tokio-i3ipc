@@ -1,14 +1,14 @@
 use crate::{io as i3io, *};
 
 use futures::prelude::*;
-use futures::{future, sync::mpsc::Sender, Future};
+use futures::{future, channel::mpsc::Sender, Future};
 use serde::de::DeserializeOwned;
 use std::io as stio;
 use tokio::codec::FramedRead;
 use tokio::io::{self as tio, AsyncRead};
 
 /// Convenience function that decodes a single response and passes the type and undecoded buffer to a closure
-pub fn decode_response<F, T, S>(stream: S, f: F) -> impl Future<Item = (S, T), Error = stio::Error>
+pub fn decode_response<F, T, S>(stream: S, f: F) -> impl Future<Output = stio::Result<(S, T)>>
 where
     F: Fn(u32, Vec<u8>) -> T,
     S: AsyncRead,
@@ -30,7 +30,7 @@ where
 /// Decode a response into a [MsgResponse](struct.MsgResponse.html)
 pub fn decode_msg<D, S>(
     stream: S,
-) -> impl Future<Item = (S, stio::Result<MsgResponse<D>>), Error = stio::Error>
+) -> impl Future<Output = stio::Result<(S, stio::Result<MsgResponse<D>>)>>
 where
     D: DeserializeOwned,
     S: AsyncRead,
@@ -41,7 +41,7 @@ where
 /// Decode a response into an [Event](event/enum.Event.html)
 pub fn decode_event_future<D, S>(
     stream: S,
-) -> impl Future<Item = (S, stio::Result<event::Event>), Error = stio::Error>
+) -> impl Future<Output = stio::Result<(S, stio::Result<event::Event>)>>
 where
     D: DeserializeOwned,
     S: AsyncRead,
@@ -54,7 +54,7 @@ where
 pub fn subscribe_future<S, E>(
     stream: S,
     events: E,
-) -> impl Future<Item = (S, MsgResponse<reply::Success>), Error = stio::Error>
+) -> impl Future<Output = stio::Result<(S, MsgResponse<reply::Success>)>>
 where
     S: AsyncI3IPC,
     E: AsRef<[event::Subscribe]>,

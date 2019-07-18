@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+#![feature(async_await)]
+>>>>>>> Start async-await conversion
 #![doc(html_root_url = "https://docs.rs/tokio-i3ipc/0.5.0")]
 //! # tokio-i3ipc  
 //!
@@ -73,8 +77,8 @@ mod util;
 
 pub use util::*;
 
-use futures::{try_ready, Async, Future, Poll};
-use std::io as stio;
+use futures::{ready, Future};
+use std::{io as stio, pin::Pin, task::{Context, Poll}};
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_uds::{ConnectFuture, UnixStream};
 
@@ -87,8 +91,7 @@ pub struct I3 {
 /// Provides a `connect` function for types which returns a `Future`
 pub trait Connect {
     type Connected: AsyncI3IPC;
-    type Error;
-    type Future: Future<Item = Self::Connected, Error = Self::Error>;
+    type Future: Future<Output=Self::Connected>;
 
     fn connect() -> stio::Result<Self::Future>;
 }
@@ -96,7 +99,6 @@ pub trait Connect {
 impl Connect for I3 {
     type Connected = UnixStream;
     type Future = ConnectFuture;
-    type Error = stio::Error;
     fn connect() -> stio::Result<Self::Future> {
         Ok(UnixStream::connect(socket_path()?))
     }
@@ -108,15 +110,14 @@ pub trait AsyncI3IPC: AsyncRead + AsyncWrite + I3IPC {}
 
 /// Add the default trait to `UnixStream`
 impl AsyncI3IPC for UnixStream {}
-impl<'a, T: ?Sized + AsyncI3IPC> AsyncI3IPC for &'a mut T {}
-impl<T: ?Sized + AsyncI3IPC> AsyncI3IPC for Box<T> {}
+impl<'a, T: ?Sized + AsyncI3IPC + Unpin> AsyncI3IPC for &'a mut T {}
+impl<T: ?Sized + AsyncI3IPC + Unpin> AsyncI3IPC for Box<T> {}
 
 // Implement `Future` for [I3](struct.I3.html) so it can be polled into a ready `UnixStream`
-impl Future for I3 {
-    type Item = UnixStream;
-    type Error = stio::Error;
-    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
-        let stream = try_ready!(self.conn.poll());
-        Ok(Async::Ready(stream))
+impl Future for I3 where {
+    type Output = stio::Result<UnixStream>;
+    fn poll(mut self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Self::Output> {
+        let stream = ready!(self.conn.poll());
+        Poll::Ready(Ok(stream))
     }
 }

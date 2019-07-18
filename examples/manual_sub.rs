@@ -2,7 +2,7 @@ use futures::{
     future,
     sink::Sink,
     stream::Stream,
-    sync::mpsc::{self, Sender},
+    mpsc::{self, Sender},
     Future,
 };
 use std::io;

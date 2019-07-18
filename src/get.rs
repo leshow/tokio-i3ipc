@@ -17,7 +17,7 @@ use std::io;
 /// Run an arbitrary command for i3 and decode the responses, represented as vector of success true/false
 pub fn connect_and_run_command<S>(
     command: S,
-) -> impl Future<Item = MsgResponse<Vec<reply::Success>>, Error = io::Error>
+) -> impl Future<Output = io::Result<MsgResponse<Vec<reply::Success>>>>
 where
     S: AsRef<str>,
 {
@@ -32,42 +32,42 @@ where
 pub fn run_command<S: AsRef<str>>(
     stream: UnixStream,
     command: S,
-) -> impl Future<Item = (UnixStream, MsgResponse<Vec<reply::Success>>), Error = io::Error> {
+) -> impl Future<Output = io::Result<(UnixStream, MsgResponse<Vec<reply::Success>>)>> {
     i3io::write_msg(stream, Msg::RunCommand, command).and_then(i3io::read_msg_and)
 }
 
 /// Future for getting the current [Workspaces](../reply/struct.Workspace.html), sends [Workspaces](../msg/enum.Msg.html#variant.Workspaces)
 pub fn get_workspaces(
     stream: UnixStream,
-) -> impl Future<Item = (UnixStream, MsgResponse<reply::Workspaces>), Error = io::Error> {
+) -> impl Future<Output = io::Result<(UnixStream, MsgResponse<reply::Workspaces>)>> {
     i3io::send_msg(stream, Msg::Workspaces).and_then(i3io::read_msg_and)
 }
 
 /// Future that gets all [Outputs](../reply/struct.Outputs.html), sends [Outputs](../msg/enum.Msg.html#variant.Outputs)
 pub fn get_outputs(
     stream: UnixStream,
-) -> impl Future<Item = (UnixStream, MsgResponse<reply::Outputs>), Error = io::Error> {
+) -> impl Future<Output = io::Result<(UnixStream, MsgResponse<reply::Outputs>)> > {
     i3io::send_msg(stream, Msg::Outputs).and_then(i3io::read_msg_and)
 }
 
 /// Future to get complete [Node](../reply/struct.Node.html), sends [Tree](../msg/enum.Msg.html#variant.Tree)
 pub fn get_tree(
     stream: UnixStream,
-) -> impl Future<Item = (UnixStream, MsgResponse<reply::Node>), Error = io::Error> {
+) -> impl Future<Output = io::Result<(UnixStream, MsgResponse<reply::Node>), >> {
     i3io::send_msg(stream, Msg::Tree).and_then(i3io::read_msg_and)
 }
 
 /// Get all [Marks](../reply/struct.Marks.html), sends [Marks](../msg/enum.Msg.html#variant.Marks)
 pub fn get_marks(
     stream: UnixStream,
-) -> impl Future<Item = (UnixStream, MsgResponse<reply::Marks>), Error = io::Error> {
+) -> impl Future<Output = io::Result<(UnixStream, MsgResponse<reply::Marks>)> > {
     i3io::send_msg(stream, Msg::Marks).and_then(i3io::read_msg_and)
 }
 
 /// Future to get all [BarIds](../reply/struct.BarIds.html), sends [BarConfig](../msg/enum.Msg.html#variant.BarConfig)
 pub fn get_bar_ids(
     stream: UnixStream,
-) -> impl Future<Item = (UnixStream, MsgResponse<reply::BarIds>), Error = io::Error> {
+) -> impl Future<Output = io::Result<(UnixStream, MsgResponse<reply::BarIds>)> > {
     i3io::send_msg(stream, Msg::BarConfig).and_then(i3io::read_msg_and)
 }
 
@@ -75,7 +75,7 @@ pub fn get_bar_ids(
 pub fn get_bar_config(
     stream: UnixStream,
     ids: Vec<String>,
-) -> impl Future<Item = (UnixStream, MsgResponse<reply::BarConfig>), Error = io::Error> {
+) -> impl Future<Ouput = io::Result<(UnixStream, MsgResponse<reply::BarConfig>)> > {
     i3io::write_msg_json(stream, Msg::BarConfig, ids)
         .expect("Serialization of BarIds failed")
         .and_then(i3io::read_msg_and)
@@ -84,27 +84,28 @@ pub fn get_bar_config(
 /// Future to get [BindingModes](../reply/struct.BindingModes.html), sends [BindingModes](../msg/enum.Msg.html#variant.BindingModes)
 pub fn get_binding_modes(
     stream: UnixStream,
-) -> impl Future<Item = (UnixStream, MsgResponse<reply::BindingModes>), Error = io::Error> {
+) -> impl Future<Output = io::Result<(UnixStream, MsgResponse<reply::BindingModes>)> > {
     i3io::send_msg(stream, Msg::BindingModes).and_then(i3io::read_msg_and)
 }
 
 /// Future for [Config](../reply/struct.Config.html), sends [Config](../msg/enum.Msg.html#variant.Config)
 pub fn get_config(
     stream: UnixStream,
-) -> impl Future<Item = (UnixStream, MsgResponse<reply::Config>), Error = io::Error> {
+) -> impl Future<Output = io::Result<(UnixStream, MsgResponse<reply::Config>)> > {
     i3io::send_msg(stream, Msg::Config).and_then(i3io::read_msg_and)
 }
 
 /// Future sends [Tick](../msg/enum.Msg.html#variant.Tick)
 pub fn get_tick(
     stream: UnixStream,
-) -> impl Future<Item = (UnixStream, MsgResponse<reply::Success>), Error = io::Error> {
+) -> impl Future<Output = io::Result<(UnixStream, MsgResponse<reply::Success>)>> {
     i3io::send_msg(stream, Msg::Tick).and_then(i3io::read_msg_and)
 }
 
 /// Future [Sync](../msg/enum.Msg.html#variant.Sync)
-pub fn get_sync(
+pub async fn get_sync(
     stream: UnixStream,
-) -> impl Future<Item = (UnixStream, MsgResponse<reply::Success>), Error = io::Error> {
-    i3io::send_msg(stream, Msg::Sync).and_then(i3io::read_msg_and)
+) -> io::Result<(UnixStream, MsgResponse<reply::Success>)> {
+    let s = i3io::send_msg(stream, Msg::Sync).await?;
+    Ok(i3io::read_msg_and(s).await?)
 }

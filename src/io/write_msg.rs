@@ -1,7 +1,8 @@
 use crate::AsyncI3IPC;
 use i3ipc_types::*;
 
-use futures::{try_ready, Future, Poll};
+use futures::{ready, Future, Poll};
+use std::{pin::Pin, task::Context};
 use serde::Serialize;
 use std::io as stio;
 use tokio::io as tio;
@@ -65,10 +66,9 @@ where
     S: AsyncI3IPC,
     T: AsRef<str>,
 {
-    type Item = S;
-    type Error = stio::Error;
+    type Output = stio::Result<S>;
 
-    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
+    fn poll(mut self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Self::Output> {
         match self.state {
             StateW::Writing {
                 ref mut stream,
@@ -76,13 +76,13 @@ where
             } => {
                 let buf = buf.as_ref();
                 let send = stream._encode_msg(self.msg, buf);
-                let (_strm, _size) = try_ready!(tio::write_all(stream, send).poll());
+                let (_strm, _size) = ready!(tio::write_all(stream, send).poll());
             }
             StateW::Empty => panic!("poll a WriteAll after it's done"),
         }
 
         match std::mem::replace(&mut self.state, StateW::Empty) {
-            StateW::Writing { stream, .. } => Ok((stream).into()),
+            StateW::Writing { stream, .. } => Poll::Ready(Ok(stream).into()),
             StateW::Empty => panic!(),
         }
     }

@@ -1,4 +1,4 @@
-use futures::{future, stream::Stream, sync::mpsc};
+use futures::{future, stream::Stream, mpsc};
 use i3ipc_types::event::{self, Subscribe};
 use std::io;
 

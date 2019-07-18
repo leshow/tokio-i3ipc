@@ -23,6 +23,9 @@ tokio = "0.1"
 futures = "0.1"
 i3ipc-types = { version = "0.5", path = "i3ipc-types" }
 
+[dev-dependencies]
+version-sync = "0.8"
+
 [workspace]
 members = ["./", "i3-ipc", "i3ipc-types"]
 

@@ -25,7 +25,7 @@ cache:
 script:
   - if [ "$TRAVIS_RUST_VERSION" != "nightly" ]; then
     cargo fmt --all -- --check &&
-    cargo clippy --all --tests --examples;
+    cargo clippy --all --tests --examples -- --deny clippy::all;
     fi
   - env RUST_BACKTRACE=1 RUST_LOG=tokio_i3ipc=trace cargo test -- --nocapture
   - if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then

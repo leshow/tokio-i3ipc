@@ -3,6 +3,9 @@ rust:
   - stable
   - nightly
 
+branches:
+  only:
+  - master
 
 before_install:
   - export RUSTFLAGS="-D warnings"

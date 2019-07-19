@@ -1,6 +1,6 @@
 # tokio-i3ipc
 
-[![Build Status](https://travis-ci.com/leshow/tokio-i3ipc.svg?branch=master)](https://travis-ci.com/leshow/tokio-i3ipc)
+[![Build Status](https://travis-ci.com/leshow/tokio-i3ipc.svg?branch=master)](https://travis-ci.com/leshow/tokio-i3ipc?branch=master)
 [![Crate](https://img.shields.io/crates/v/tokio-i3ipc.svg)](https://crates.io/crates/tokio-i3ipc)
 [![API](https://docs.rs/tokio-i3ipc/badge.svg)](https://docs.rs/tokio-i3ipc)
 
@@ -140,7 +140,6 @@ fn main() {
     tokio::run(fut);
 }
 ```
-
 
 ### "Real world" example
 

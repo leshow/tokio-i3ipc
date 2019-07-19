@@ -84,6 +84,7 @@ pub struct I3 {
     conn: ConnectFuture,
 }
 
+/// Provides a `connect` function for types which returns a `Future`
 pub trait Connect {
     type Connected: AsyncI3IPC;
     type Error;
@@ -111,7 +112,7 @@ impl<'a, T: ?Sized + AsyncI3IPC> AsyncI3IPC for &'a mut T {}
 impl<T: ?Sized + AsyncI3IPC> AsyncI3IPC for Box<T> {}
 
 // Implement `Future` for [I3](struct.I3.html) so it can be polled into a ready `UnixStream`
-impl Future for I3 where {
+impl Future for I3 {
     type Item = UnixStream;
     type Error = stio::Error;
     fn poll(&mut self) -> Poll<Self::Item, Self::Error> {

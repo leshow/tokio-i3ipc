@@ -38,4 +38,4 @@ name = "manual_sub"
 path = "examples/manual_sub.rs"
 
 [badges]
-travis-ci = { repository = "https://travis-ci.com/leshow/tokio-i3ipc", branch = "master", service = "github" }
+travis-ci = { repository = "leshow/tokio-i3ipc", branch = "master", service = "github" }

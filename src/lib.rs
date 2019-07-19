@@ -1,3 +1,4 @@
+#![doc(html_root_url = "https://docs.rs/tokio-i3ipc/0.5.0")]
 //! # tokio-i3ipc  
 //!
 //! This crate provides types and functions for working with i3's IPC protocol within tokio. It re-exports the subcrate `i3ipc-types` because it is also used for a synchronous version of the code.

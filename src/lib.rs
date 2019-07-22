@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 #![feature(async_await)]
->>>>>>> Start async-await conversion
 #![doc(html_root_url = "https://docs.rs/tokio-i3ipc/0.5.0")]
 //! # tokio-i3ipc  
 //!
@@ -117,7 +114,7 @@ impl<T: ?Sized + AsyncI3IPC + Unpin> AsyncI3IPC for Box<T> {}
 impl Future for I3 where {
     type Output = stio::Result<UnixStream>;
     fn poll(mut self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Self::Output> {
-        let stream = ready!(self.conn.poll());
+        let stream = ready!(self.conn?.poll());
         Poll::Ready(Ok(stream))
     }
 }

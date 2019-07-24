@@ -18,10 +18,10 @@ repository = "https://github.com/leshow/tokio-i3ipc"
 bytes = "0.4"
 serde = "1.0"
 serde_json = "1.0"
-tokio-uds = "0.2"
-tokio = { git = "https://github.com/tokio-rs/tokio" }
 futures-preview = "0.3.0-alpha.17"
 i3ipc-types = { version = "0.5", path = "i3ipc-types" }
+tokio = { git = "https://github.com/tokio-rs/tokio", features = ["io", "codec"] }
+tokio-uds = { git = "https://github.com/tokio-rs/tokio/", features = ["async-traits"] }
 
 [dev-dependencies]
 version-sync = "0.8"

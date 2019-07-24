@@ -1,8 +1,8 @@
 use crate::io;
 use i3ipc_types::*;
 
-use futures::{ready, Poll};
-use std::{pin::Pin, future::Future, task::Context};
+use futures::{ready, future::Future, Poll};
+use std::{pin::Pin, task::Context};
 use serde::de::DeserializeOwned;
 use std::{io as stio, marker::PhantomData};
 use tokio::io::AsyncRead;
@@ -30,7 +30,7 @@ where
 impl<D, S> Future for I3MsgAnd<D, S>
 where
     D: DeserializeOwned,
-    S: AsyncRead,
+    S: AsyncRead + Unpin,
 {
     type Output = stio::Result<(S, MsgResponse<D>)>;
     fn poll(mut self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Self::Output> {
@@ -39,7 +39,7 @@ where
                 ref mut stream,
                 ref mut resp,
             } => {
-                let msg = ready!(io::read_msg::<D, _>(stream).poll());
+                let msg = ready!(io::read_msg::<D, _>(stream).poll(ctx));
                 *resp = Some(msg);
             }
             State::Empty => panic!("poll a ReadExact after it's done"),

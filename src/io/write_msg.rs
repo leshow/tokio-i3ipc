@@ -5,7 +5,7 @@ use futures::{ready, Future, Poll};
 use std::{pin::Pin, task::Context};
 use serde::Serialize;
 use std::io as stio;
-use tokio::io as tio;
+use tokio::{io as tio, io::AsyncWriteExt};
 use tokio_uds::UnixStream;
 
 #[derive(Debug)]
@@ -63,7 +63,7 @@ where
 
 impl<T, S> Future for I3WriteMsg<T, S>
 where
-    S: AsyncI3IPC,
+    S: AsyncI3IPC + Unpin,
     T: AsRef<str>,
 {
     type Output = stio::Result<S>;
@@ -76,7 +76,7 @@ where
             } => {
                 let buf = buf.as_ref();
                 let send = stream._encode_msg(self.msg, buf);
-                let (_strm, _size) = ready!(tio::write_all(stream, send).poll());
+                let (_strm, _size) = ready!(<S as AsyncWriteExt>::write_all(stream, &send).poll(ctx));
             }
             StateW::Empty => panic!("poll a WriteAll after it's done"),
         }

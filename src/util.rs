@@ -1,30 +1,30 @@
 use crate::{io as i3io, *};
 
 use futures::prelude::*;
-use futures::{future, channel::mpsc::Sender, Future};
+use futures::{channel::mpsc::Sender, Future};
 use serde::de::DeserializeOwned;
 use std::io as stio;
 use tokio::codec::FramedRead;
-use tokio::io::{self as tio, AsyncRead};
+use tokio::io::{AsyncRead};
 
 /// Convenience function that decodes a single response and passes the type and undecoded buffer to a closure
-pub fn decode_response<F, T, S>(stream: S, f: F) -> impl Future<Output = stio::Result<(S, T)>>
+pub async fn decode_response<F, T, S>(stream: S, f: F) -> stio::Result<(S, T)>
 where
     F: Fn(u32, Vec<u8>) -> T,
-    S: AsyncRead,
+    S: AsyncRead + Unpin,
 {
     let buf = [0; 14];
-    tio::read_exact(stream, buf).and_then(|(stream, init)| {
-        if &init[0..6] != MAGIC.as_bytes() {
-            panic!("Magic str not received");
-        }
-        let payload_len = u32::from_ne_bytes([init[6], init[7], init[8], init[9]]) as usize;
-        let msg_type = u32::from_ne_bytes([init[10], init[11], init[12], init[13]]);
+    stream.read_exact(&mut buf).await?;
+ 
+    if &buf[0..6] != MAGIC.as_bytes() {
+        panic!("Magic str not received");
+    }
+    let payload_len = u32::from_ne_bytes([buf[6], buf[7], buf[8], buf[9]]) as usize;
+    let msg_type = u32::from_ne_bytes([buf[10], buf[11], buf[12], buf[13]]);
 
-        let buf = vec![0; payload_len];
-        tio::read_exact(stream, buf)
-            .and_then(move |(stream, buf)| future::ok((stream, f(msg_type, buf))))
-    })
+    let payload = vec![0; payload_len];
+    stream.read_exact(&mut payload).await?;
+    Ok((stream, f(msg_type, payload)))
 }
 
 /// Decode a response into a [MsgResponse](struct.MsgResponse.html)
@@ -33,7 +33,7 @@ pub fn decode_msg<D, S>(
 ) -> impl Future<Output = stio::Result<(S, stio::Result<MsgResponse<D>>)>>
 where
     D: DeserializeOwned,
-    S: AsyncRead,
+    S: AsyncRead + Unpin,
 {
     decode_response(stream, MsgResponse::new)
 }
@@ -44,24 +44,23 @@ pub fn decode_event_future<D, S>(
 ) -> impl Future<Output = stio::Result<(S, stio::Result<event::Event>)>>
 where
     D: DeserializeOwned,
-    S: AsyncRead,
+    S: AsyncRead + Unpin,
 {
     decode_response(stream, decode_event)
 }
 
 /// Function returns a Future that will send a [Subscribe](event/enum.Subscribe.html) to i3 along with the events to listen to.
 /// Is bounded by [AsyncI3IPC](trait.AsyncI3IPC.html) but you should almost always use `UnixStream`
-pub fn subscribe_future<S, E>(
+pub async fn subscribe_future<S, E>(
     stream: S,
     events: E,
-) -> impl Future<Output = stio::Result<(S, MsgResponse<reply::Success>)>>
+) -> stio::Result<(S, MsgResponse<reply::Success>)>
 where
-    S: AsyncI3IPC,
+    S: AsyncI3IPC + Unpin,
     E: AsRef<[event::Subscribe]>,
 {
-    i3io::write_msg_json(stream, msg::Msg::Subscribe, events.as_ref())
-        .expect("Encoding failed")
-        .and_then(i3io::read_msg_and::<reply::Success, _>)
+    let s = i3io::write_msg_json(stream, msg::Msg::Subscribe, events.as_ref())?.await?;
+    Ok(i3io::read_msg_and::<reply::Success, _>(s).await?)
 }
 
 /// An easy-to-use subscribe, all you need to do is pass a runtime handle and a `Sender` half of a channel, then listen on

@@ -4,7 +4,7 @@ use futures::{ready, Future, Poll};
 use std::{pin::Pin, task::{Context}};
 use serde::de::DeserializeOwned;
 use std::{io as stio, marker::PhantomData};
-use tokio::io::{self as tio, AsyncRead};
+use tokio::io::{self as tio, AsyncRead, AsyncReadExt};
 use tokio_uds::UnixStream;
 
 #[derive(Debug)]
@@ -28,14 +28,14 @@ where
 
 impl<D, S> Future for I3Msg<D, S>
 where
-    S: AsyncRead,
+    S: AsyncRead + Unpin,
     D: DeserializeOwned,
 {
     type Output = stio::Result<MsgResponse<D>>;
     fn poll(mut self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Self::Output> {
         let mut buf = [0_u8; 14];
 
-        let (rd, init) = ready!(tio::read_exact(&mut self.stream, &mut buf).poll());
+        let (rd, init) = ready!(self.stream.read_exact(&mut buf).poll(ctx));
 
         if &init[0..6] != MAGIC.as_bytes() {
             panic!("Magic str not received");
@@ -43,7 +43,7 @@ where
         let payload_len = u32::from_ne_bytes([init[6], init[7], init[8], init[9]]) as usize;
         let msg_type = u32::from_ne_bytes([init[10], init[11], init[12], init[13]]);
         let mut buf = vec![0_u8; payload_len];
-        let (_rdr, payload) = ready!(tio::read_exact(rd, &mut buf).poll());
+        let (_rdr, payload) = ready!(rd.read_exact(&mut buf).poll(ctx));
 
         Poll::Ready(Ok(MsgResponse {
             msg_type: msg_type.into(),

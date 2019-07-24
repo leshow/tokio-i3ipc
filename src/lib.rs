@@ -76,7 +76,7 @@ pub use util::*;
 
 use futures::{ready, Future};
 use std::{io as stio, pin::Pin, task::{Context, Poll}};
-use tokio::io::{AsyncRead, AsyncWrite};
+use tokio::io::{AsyncRead, AsyncWrite, AsyncReadExt, AsyncWriteExt};
 use tokio_uds::{ConnectFuture, UnixStream};
 
 /// Newtype wrapper for `ConnectFuture` meant to resolve some Stream, mostly likely `UnixStream`
@@ -103,7 +103,7 @@ impl Connect for I3 {
 
 /// [I3IPC](trait.I3IPC.html) provides default implementations for reading/writing buffers into a format i3 understands. This
 /// trait expresses that + asynchronousity
-pub trait AsyncI3IPC: AsyncRead + AsyncWrite + I3IPC {}
+pub trait AsyncI3IPC: AsyncRead + AsyncWrite + I3IPC + AsyncReadExt + AsyncWriteExt {}
 
 /// Add the default trait to `UnixStream`
 impl AsyncI3IPC for UnixStream {}
@@ -114,7 +114,13 @@ impl<T: ?Sized + AsyncI3IPC + Unpin> AsyncI3IPC for Box<T> {}
 impl Future for I3 where {
     type Output = stio::Result<UnixStream>;
     fn poll(mut self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Self::Output> {
-        let stream = ready!(self.conn?.poll());
+        let stream = ready!(self.conn.poll(ctx));
         Poll::Ready(Ok(stream))
     }
 }
+
+// impl I3 {
+//     pub async fn connect(&mut self) -> stio::Result<UnixStream> {
+//         Ok(self.conn.await?)
+//     }
+// }

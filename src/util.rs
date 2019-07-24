@@ -63,34 +63,36 @@ where
     Ok(i3io::read_msg_and::<reply::Success, _>(s).await?)
 }
 
-/// An easy-to-use subscribe, all you need to do is pass a runtime handle and a `Sender` half of a channel, then listen on
-/// the `rx` side for events
-pub fn subscribe(
-    rt: tokio::runtime::current_thread::Handle,
-    tx: Sender<event::Event>,
-    events: Vec<event::Subscribe>,
-) -> stio::Result<()> {
-    let fut = I3::connect()?
-        .and_then(|stream| {
-            i3io::write_msg_json(stream, msg::Msg::Subscribe, events).expect("Encoding failed")
-        })
-        .and_then(i3io::read_msg_and::<reply::Success, _>)
-        .and_then(|(stream, _r)| {
-            let framed = FramedRead::new(stream, codec::EventCodec);
-            let sender = framed
-                .for_each(move |evt| {
-                    let tx = tx.clone();
-                    tx.send(evt)
-                        .map(|_| ())
-                        .map_err(|e| stio::Error::new(stio::ErrorKind::BrokenPipe, e))
-                })
-                .map_err(|err| eprintln!("{}", err));
-            tokio::spawn(sender);
-            Ok(())
-        })
-        .map(|_| ())
-        .map_err(|e| eprintln!("{:?}", e));
+// An easy-to-use subscribe, all you need to do is pass a runtime handle and a `Sender` half of a channel, then listen on
+// the `rx` side for events
+// TODO
+// pub fn subscribe(
+//     rt: tokio::runtime::current_thread::Handle,
+//     tx: Sender<event::Event>,
+//     events: Vec<event::Subscribe>,
+// ) -> stio::Result<()> {
+//     let fut = I3::connect()?
+//         .and_then(|stream| {
+//             i3io::write_msg_json(stream, msg::Msg::Subscribe, events).expect("Encoding failed")
+//         })
+//         .and_then(i3io::read_msg_and::<reply::Success, _>)
+//         .and_then(|(stream, _r)| {
+//             let framed = FramedRead::new(stream, codec::EventCodec);
+//             let sender = framed
+//                 .for_each(move |evt| {
+//                     let tx = tx.clone();
+//                     tx.send(evt)
+//                         .map(|_| ())
+//                         .map_err(|e| stio::Error::new(stio::ErrorKind::BrokenPipe, e))
+//                 })
+//                 .map_err(|err| eprintln!("{}", err));
+//             tokio::spawn(sender);
+//             Ok(())
+//         })
+//         .map(|_| ())
+//         .map_err(|e| eprintln!("{:?}", e));
 
-    rt.spawn(fut).expect("failed to spawn");
-    Ok(())
-}
+//     rt.spawn(fut).expect("failed to spawn");
+//     Ok(())
+// }
+

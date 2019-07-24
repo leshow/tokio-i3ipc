@@ -1,8 +1,8 @@
 use crate::io;
 use i3ipc_types::*;
 
-use futures::{ready, future::Future, Poll};
-use std::{pin::Pin, task::Context};
+use futures::{ready, Poll};
+use std::{pin::Pin, task::Context, future::Future};
 use serde::de::DeserializeOwned;
 use std::{io as stio, marker::PhantomData};
 use tokio::io::AsyncRead;

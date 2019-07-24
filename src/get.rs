@@ -15,17 +15,17 @@ use i3ipc_types::{msg::Msg, reply, MsgResponse};
 use std::io;
 
 /// Run an arbitrary command for i3 and decode the responses, represented as vector of success true/false
-pub async fn connect_and_run_command<S>(
-    command: S,
-) -> io::Result<MsgResponse<Vec<reply::Success>>>
-where
-    S: AsRef<str>,
-{
-    let s = I3::connect()?.await?;
-    let s = i3io::write_msg(s, msg::Msg::RunCommand, command).await?;
-    let (s, r) = i3io::read_msg_and(s).await?;
-   Ok(r) 
-}
+// pub async fn connect_and_run_command<S>(
+//     command: S,
+// ) -> io::Result<MsgResponse<Vec<reply::Success>>>
+// where
+//     S: AsRef<str>,
+// {
+//     let s = I3::connect()?.await?;
+//     let s = i3io::write_msg(s, msg::Msg::RunCommand, command).await?;
+//     let (s, r) = i3io::read_msg_and(s).await?;
+//    Ok(r) 
+// }
 
 /// Run an arbitrary command on i3. Response is a `Vec` of success true/false.
 pub async fn run_command<S: AsRef<str>>(

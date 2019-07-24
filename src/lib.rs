@@ -85,10 +85,10 @@ pub struct I3 {
     conn: ConnectFuture,
 }
 
-/// Provides a `connect` function for types which returns a `Future`
+// /// Provides a `connect` function for types which returns a `Future`
 pub trait Connect {
     type Connected: AsyncI3IPC;
-    type Future: Future<Output=Self::Connected>;
+    type Future: Future<Output=stio::Result<Self::Connected>>;
 
     fn connect() -> stio::Result<Self::Future>;
 }
@@ -103,7 +103,7 @@ impl Connect for I3 {
 
 /// [I3IPC](trait.I3IPC.html) provides default implementations for reading/writing buffers into a format i3 understands. This
 /// trait expresses that + asynchronousity
-pub trait AsyncI3IPC: AsyncRead + AsyncWrite + I3IPC + AsyncReadExt + AsyncWriteExt {}
+pub trait AsyncI3IPC: AsyncRead + AsyncWrite + AsyncReadExt + AsyncWriteExt + I3Protocol {}
 
 /// Add the default trait to `UnixStream`
 impl AsyncI3IPC for UnixStream {}

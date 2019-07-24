@@ -18,3 +18,12 @@ serde = "1.0"
 serde_repr = "0.1"
 serde_derive = "1.0"
 serde_json = "1.0"
+
+[features]
+default = []
+async-traits = ["tokio"]
+
+[dependencies.tokio]
+git = "https://github.com/tokio-rs/tokio"
+features = ["io", "codec"] 
+optional = true

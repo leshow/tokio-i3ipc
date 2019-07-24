@@ -4,17 +4,14 @@ use std::io;
 
 use tokio_i3ipc::subscribe;
 
-fn main() -> io::Result<()> {
+#[tokio::main]
+async fn main() -> io::Result<()> {
     println!("starting");
-    let mut rt = tokio::runtime::current_thread::Runtime::new().expect("Failed building runtime");
     let (tx, rx) = mpsc::channel(5);
-    subscribe(rt.handle(), tx, vec![Subscribe::Window])?;
-    let fut = rx.for_each(|e: event::Event| {
+    subscribe(tx, vec![Subscribe::Window])?.await?;
+    while let Some(result) = rx.next().await {
         println!("received");
         println!("{:#?}", e);
-        future::ok(())
-    });
-    rt.spawn(fut);
-    rt.run().expect("failed runtime");
+    }
     Ok(())
 }

@@ -5,6 +5,9 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use std::{env, io, process::Command};
 
+#[cfg(feature = "async-traits")]
+use tokio::io::{AsyncRead, AsyncWrite};
+
 pub mod event;
 pub mod msg;
 pub mod reply;
@@ -17,8 +20,7 @@ pub trait Connect {
 
 pub const MAGIC: &str = "i3-ipc";
 
-/// Trait containing methods to encode and decode message from i3
-pub trait I3IPC: io::Read + io::Write {
+pub trait I3Protocol {
     const MAGIC: &'static str = MAGIC;
 
     fn _encode_msg<P>(&self, msg: msg::Msg, payload: Option<P>) -> Vec<u8>
@@ -26,7 +28,7 @@ pub trait I3IPC: io::Read + io::Write {
         P: AsRef<str>,
     {
         let mut buf = Vec::with_capacity(14);
-        buf.extend(<Self as I3IPC>::MAGIC.as_bytes());
+        buf.extend(<Self as I3Protocol>::MAGIC.as_bytes());
         if let Some(p) = &payload {
             buf.extend(&(p.as_ref().len() as u32).to_ne_bytes());
         } else {
@@ -60,11 +62,14 @@ pub trait I3IPC: io::Read + io::Write {
     fn decode_event(evt_type: u32, payload: Vec<u8>) -> io::Result<event::Event> {
         decode_event(evt_type, payload)
     }
+}
 
+/// Trait containing methods to encode and decode message from i3
+pub trait I3IPC: io::Read + io::Write + I3Protocol {
     fn decode_msg(&mut self) -> io::Result<(u32, Vec<u8>)> {
         let mut buf = [0_u8; 6];
         self.read_exact(&mut buf)?;
-        if &buf[..] != <Self as I3IPC>::MAGIC.as_bytes() {
+        if &buf[..] != <Self as I3Protocol>::MAGIC.as_bytes() {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidData,
                 format!("Expected 'i3-ipc' but received: {:?}", buf),
@@ -85,9 +90,12 @@ pub trait I3IPC: io::Read + io::Write {
     }
 }
 
+#[cfg(feature = "async-traits")]
+impl<T: AsyncRead + AsyncWrite> I3Protocol for T {}
+
 // Any type which brings `I3IPC` into scope and implements Read and Write gets
 // the protocol implemented for free
-impl<T: io::Read + io::Write> I3IPC for T {}
+impl<T: io::Read + io::Write + I3Protocol> I3IPC for T {}
 
 /// Instead of returning an enum, we're returning a struct containing the `Msg` type
 /// and some body. An advantage to this over the enum method is that there is no minimum

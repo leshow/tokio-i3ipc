@@ -71,7 +71,6 @@ pub mod codec;
 mod util;
 
 pub use util::*;
-use codec::EventCodec;
 
 use serde::de::DeserializeOwned;
 use std::io;
@@ -176,8 +175,8 @@ impl I3 {
     }
 
     /// Provides a type that implements `Stream` so you can `await` events in a loop
-    pub fn listen(self) -> FramedRead<UnixStream, D> {
-         FramedRead::new(self.stream, EventCodec)
+    pub fn listen(self) -> FramedRead<UnixStream, codec::EventCodec> {
+         FramedRead::new(self.stream, codec::EventCodec)
     }
 
     /// Run an arbitrary command on i3. Response is a `Vec` of success true/false.

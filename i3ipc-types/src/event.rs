@@ -1,7 +1,6 @@
-//! For subscribing and receiving events, each struct matches a particular `Subscribe` variant.
-//! For instance, subscribing with `Subscribe::Workspace` will net `Event::Workspace` when workspace
-//! events are sent over the ipc.
-//!
+//! For subscribing and receiving events, each struct matches a particular
+//! `Subscribe` variant. For instance, subscribing with `Subscribe::Workspace`
+//! will net `Event::Workspace` when workspace events are sent over the ipc.
 use serde_derive::{Deserialize, Serialize};
 
 use crate::reply;

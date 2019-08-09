@@ -27,7 +27,8 @@
 //! }
 //! ```
 //!
-//! Getting information is equally easy, use any `get_*` method or `run_command` to send a message to i3:
+//! Getting information is equally easy, use any `get_*` method or `run_command`
+//! to send a message to i3:
 //!
 //! ```rust
 //! use i3_ipc::{Connect, I3};
@@ -60,6 +61,7 @@ pub struct I3Stream(UnixStream);
 /// Provides the `connect` method for `I3`
 impl Connect for I3 {
     type Stream = I3Stream;
+
     fn connect() -> io::Result<I3Stream> {
         Ok(I3Stream(UnixStream::connect(socket_path()?)?))
     }
@@ -76,7 +78,8 @@ impl I3Stream {
         Ok(i3)
     }
 
-    /// sends a subscribe message to i3 with a json encoded array of types of events to listen to
+    /// sends a subscribe message to i3 with a json encoded array of types of
+    /// events to listen to
     pub fn subscribe<E>(&mut self, events: E) -> io::Result<reply::Success>
     where
         E: AsRef<[event::Subscribe]>,
@@ -87,7 +90,8 @@ impl I3Stream {
         Ok(resp.body)
     }
 
-    /// Returns a type that implements `Iterator`, allowing us to listen to events
+    /// Returns a type that implements `Iterator`, allowing us to listen to
+    /// events
     pub fn listen(&'_ mut self) -> I3Iter<'_> {
         I3Iter { stream: self }
     }
@@ -118,7 +122,8 @@ impl I3Stream {
         decode_event(evt_type, payload_bytes)
     }
 
-    /// Send a `Msg` and payload and receive a response. Convenience function over `send_msg` and `receive_msg`
+    /// Send a `Msg` and payload and receive a response. Convenience function
+    /// over `send_msg` and `receive_msg`
     pub fn send_receive<P, D>(&mut self, msg: msg::Msg, payload: P) -> io::Result<MsgResponse<D>>
     where
         P: AsRef<str>,
@@ -226,13 +231,15 @@ impl Write for I3Stream {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.0.write(buf)
     }
+
     fn flush(&mut self) -> io::Result<()> {
         self.0.flush()
     }
 }
 
-/// I3 event iterator, after you're subscribed to events (with the `subscribe` method). The iterator will advance each iteration on
-/// receiving an `Event`. These are decoded using `serde_json` and returned
+/// I3 event iterator, after you're subscribed to events (with the `subscribe`
+/// method). The iterator will advance each iteration on receiving an `Event`.
+/// These are decoded using `serde_json` and returned
 #[derive(Debug)]
 pub struct I3Iter<'a> {
     stream: &'a mut I3Stream,

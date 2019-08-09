@@ -3,7 +3,7 @@
 //! Using `EventCodec` to subscribe to [event::Event](../event/enum.Event.html)
 //! from i3:
 //!
-//! ```rust
+//! ```should_panic
 //! #![feature(async_await)]
 //! # use futures::stream::StreamExt;
 //! # use std::io;

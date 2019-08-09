@@ -1,7 +1,7 @@
 #![feature(async_await)]
 use std::io;
 
-use tokio_i3ipc::{reply::Workspaces, I3};
+use tokio_i3ipc::{reply, I3};
 
 #[tokio::main]
 async fn main() -> io::Result<()> {

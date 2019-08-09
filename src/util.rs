@@ -1,13 +1,11 @@
 use crate::*;
 
-use futures::prelude::*;
-use futures::{channel::mpsc::Sender, Future};
 use serde::de::DeserializeOwned;
 use std::io as stio;
-use tokio::codec::FramedRead;
 use tokio::io::AsyncRead;
 
-/// Convenience function that decodes a single response and passes the type and undecoded buffer to a closure
+/// Convenience function that decodes a single response and passes the type and
+/// undecoded buffer to a closure
 pub async fn decode_response<F, T, S>(stream: &mut S, f: F) -> stio::Result<T>
 where
     F: Fn(u32, Vec<u8>) -> T,
@@ -43,36 +41,3 @@ where
 {
     decode_response(stream, decode_event).await
 }
-
-// An easy-to-use subscribe, all you need to do is pass a runtime handle and a `Sender` half of a channel, then listen on
-// the `rx` side for events
-// TODO
-// pub fn subscribe(
-//     rt: tokio::runtime::current_thread::Handle,
-//     tx: Sender<event::Event>,
-//     events: Vec<event::Subscribe>,
-// ) -> stio::Result<()> {
-//     let fut = I3::connect()?
-//         .and_then(|stream| {
-//             i3io::write_msg_json(stream, msg::Msg::Subscribe, events).expect("Encoding failed")
-//         })
-//         .and_then(i3io::read_msg_and::<reply::Success, _>)
-//         .and_then(|(stream, _r)| {
-//             let framed = FramedRead::new(stream, codec::EventCodec);
-//             let sender = framed
-//                 .for_each(move |evt| {
-//                     let tx = tx.clone();
-//                     tx.send(evt)
-//                         .map(|_| ())
-//                         .map_err(|e| stio::Error::new(stio::ErrorKind::BrokenPipe, e))
-//                 })
-//                 .map_err(|err| eprintln!("{}", err));
-//             tokio::spawn(sender);
-//             Ok(())
-//         })
-//         .map(|_| ())
-//         .map_err(|e| eprintln!("{:?}", e));
-
-//     rt.spawn(fut).expect("failed to spawn");
-//     Ok(())
-// }

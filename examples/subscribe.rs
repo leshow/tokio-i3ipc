@@ -1,18 +1,30 @@
 #![feature(async_await)]
-use futures::{future, stream::Stream, channel::mpsc};
-use i3ipc_types::event::{self, Subscribe};
+use futures::stream::StreamExt;
 use std::io;
 
-use tokio_i3ipc::I3;
+use tokio_i3ipc::{
+    event::{Event, Subscribe},
+    I3,
+};
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    println!("starting");
-    let i3 = I3::connect().await?;
-    i3.subscribe([Subscribe::Window]);
-    while let Some(result) = rx.next().await {
-        println!("received");
-        println!("{:#?}", e);
+    let mut i3 = I3::connect().await?;
+    let resp = i3.subscribe([Subscribe::Window]).await?;
+
+    println!("{:#?}", resp);
+    let mut listener = i3.listen();
+    while let Some(event) = listener.next().await {
+        match event? {
+            Event::Workspace(ev) => println!("workspace change event {:?}", ev),
+            Event::Window(ev) => println!("window event {:?}", ev),
+            Event::Output(ev) => println!("output event {:?}", ev),
+            Event::Mode(ev) => println!("mode event {:?}", ev),
+            Event::BarConfig(ev) => println!("bar config update {:?}", ev),
+            Event::Binding(ev) => println!("binding event {:?}", ev),
+            Event::Shutdown(ev) => println!("shutdown event {:?}", ev),
+            Event::Tick(ev) => println!("tick event {:?}", ev),
+        }
     }
     Ok(())
 }

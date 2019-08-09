@@ -1,40 +1,22 @@
-//! Implements tokio_codec's `Decoder` trait to read [event::Event](../event/enum.Event.html) from i3. Used for subscribe
+//! Implements `tokio_codec`'s `Decoder` trait
 //!
-//! Using `EventCodec` to subscribe to some events:
+//! Using `EventCodec` to subscribe to [event::Event](../event/enum.Event.html)
+//! from i3:
 //!
 //! ```rust
-//! # use tokio::codec::FramedRead;
-//! # use tokio_uds::UnixStream;
-//! # use futures::{future::Future, stream::Stream, sink::Sink, sync::mpsc::Sender};
+//! # use futures::stream::StreamExt;
 //! # use std::io;
+//! use tokio_i3ipc::{event::Subscribe, I3};
 //!
-//! use tokio_i3ipc::{Connect, subscribe_future, event, I3, codec::EventCodec};
+//! #[tokio::main]
+//! async fn main() -> io::Result<()> {
+//!     let mut i3 = I3::connect().await?;
+//!     i3.subscribe([Subscribe::Window]).await?;
 //!
-//! pub fn subscribe(
-//!     rt: tokio::runtime::current_thread::Handle,
-//!     tx: Sender<event::Event>,
-//!     events: Vec<event::Subscribe>,
-//! ) -> io::Result<()> {
-//!     let fut = I3::connect()?
-//!         .and_then(|stream: UnixStream| subscribe_future(stream, events))
-//!         .and_then(|(stream, _)| {
-//!             let framed = FramedRead::new(stream, EventCodec);
-//!             let sender = framed
-//!                 .for_each(move |evt| {
-//!                     let tx = tx.clone();
-//!                     tx.send(evt)
-//!                         .map(|_| ())
-//!                         .map_err(|e| io::Error::new(io::ErrorKind::BrokenPipe, e))
-//!                 })
-//!                 .map_err(|err| println!("{}", err));
-//!             tokio::spawn(sender);
-//!             Ok(())
-//!         })
-//!         .map(|_| ())
-//!         .map_err(|e| eprintln!("{:?}", e));
-//!
-//!     rt.spawn(fut);
-//!     Ok(())
+//!     let mut listener = i3.listen();
+//!     while let Some(event) = listener.next().await {
+//!         println!("{:#?}", event);
+//!     }
 //! }
 //! ```
 use bytes::BytesMut;
@@ -44,14 +26,16 @@ use i3ipc_types::{decode_event, event, MAGIC};
 
 use std::io;
 
-/// This codec only impls `Decoder` because it's only job is to read messages from i3 and turn
-/// them into frames of Events. All other interactions with i3 over the IPC are simple send/receive
-/// operations. Events received will be relative to what was subscribed.
+/// This codec only impls `Decoder` because it's only job is to read messages
+/// from i3 and turn them into frames of Events. All other interactions with i3
+/// over the IPC are simple send/receive operations. Events received will be
+/// relative to what was subscribed.
 pub struct EventCodec;
 
 impl Decoder for EventCodec {
-    type Item = event::Event;
     type Error = io::Error;
+    type Item = event::Event;
+
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, io::Error> {
         if src.len() > 14 {
             if &src[0..6] != MAGIC.as_bytes() {

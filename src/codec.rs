@@ -4,6 +4,7 @@
 //! from i3:
 //!
 //! ```rust
+//! #![feature(async_await)]
 //! # use futures::stream::StreamExt;
 //! # use std::io;
 //! use tokio_i3ipc::{event::Subscribe, I3};
@@ -17,6 +18,7 @@
 //!     while let Some(event) = listener.next().await {
 //!         println!("{:#?}", event);
 //!     }
+//!     Ok(())
 //! }
 //! ```
 use bytes::BytesMut;

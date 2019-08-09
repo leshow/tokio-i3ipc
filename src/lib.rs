@@ -1,5 +1,5 @@
 #![feature(async_await)]
-#![doc(html_root_url = "https://docs.rs/tokio-i3ipc/0.5.0")]
+#![doc(html_root_url = "https://docs.rs/tokio-i3ipc/0.6.0")]
 //! # tokio-i3ipc  
 //!
 //! This crate provides types and functions for working with i3's IPC protocol
@@ -14,9 +14,10 @@
 //! ## Subscribe & Listen
 //!
 //! ```should_panic
+//! #![feature(async_await)]
 //! # use futures::stream::StreamExt;
 //! # use std::io;
-//! use tokio_i3ipc::{event::Subscribe, I3};
+//! use tokio_i3ipc::{event::{Event,Subscribe}, I3};
 //!
 //! #[tokio::main]
 //! async fn main() -> io::Result<()> {
@@ -45,10 +46,11 @@
 //! To [send messages](https://i3wm.org/docs/ipc.html#_sending_messages_to_i3) to i3,
 //! call any of the `get_*` functions on [I3](struct.I3.html).
 //!
-//! ```should_panic
+//! ```rust
+//! #![feature(async_await)]
 //! use std::io;
 //!
-//! use tokio_i3ipc::{reply::Workspaces, I3};
+//! use tokio_i3ipc::{reply, I3};
 //!
 //! #[tokio::main]
 //! async fn main() -> io::Result<()> {
@@ -64,13 +66,19 @@
 //! All the `get_*` functions on [I3](struct.I3.html) are simple wrappers around
 //! two main async functions. You could write any of them yourself, in fact:
 //! ```rust
-//! pub async fn run_command<S: AsRef<str>>(
-//!     &mut self,
-//!     payload: S,
-//! ) -> io::Result<Vec<reply::Success>> {
-//!     self.send_msg_body(msg::Msg::RunCommand, payload).await?;
-//!     Ok(self.read_msg().await?.body)
-//! }
+//! #![feature(async_await)]
+//! # use std::io;
+//! use tokio_i3ipc::{msg, reply, MsgResponse, I3};
+//!
+//! #[tokio::main]
+//! # async fn main() -> io::Result<()> {
+//! let mut i3 = I3::connect().await?;
+//! // send msg RunCommand with a payload
+//! let payload = "some_command";
+//! i3.send_msg_body(msg::Msg::RunCommand, payload).await?;
+//! let resp: MsgResponse<Vec<reply::Success>> = i3.read_msg().await?;
+//! # Ok(())
+//! # }
 //! ```
 
 pub use i3ipc_types::*;

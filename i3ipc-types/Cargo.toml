@@ -24,6 +24,6 @@ default = []
 async-traits = ["tokio"]
 
 [dependencies.tokio]
-version = "=0.2.0-alpha.1"
+version = "=0.2.0-alpha.2"
 features = ["io", "codec"] 
 optional = true

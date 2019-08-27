@@ -93,7 +93,7 @@ use tokio::{
     codec::FramedRead,
     io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt},
 };
-use tokio_uds::UnixStream;
+use tokio_net::uds::UnixStream;
 
 /// [I3IPC](trait.I3IPC.html) provides default implementations for
 /// reading/writing buffers into a format i3 understands. This trait expresses

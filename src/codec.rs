@@ -4,7 +4,6 @@
 //! from i3:
 //!
 //! ```should_panic
-//! #![feature(async_await)]
 //! # use futures::stream::StreamExt;
 //! # use std::io;
 //! use tokio_i3ipc::{event::Subscribe, I3};

@@ -1,4 +1,3 @@
-#![feature(async_await)]
 use std::io;
 
 use tokio_i3ipc::{reply, I3};

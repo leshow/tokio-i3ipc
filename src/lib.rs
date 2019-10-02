@@ -1,4 +1,3 @@
-#![feature(async_await)]
 #![doc(html_root_url = "https://docs.rs/tokio-i3ipc/0.6.0")]
 //! # tokio-i3ipc  
 //!
@@ -14,7 +13,6 @@
 //! ## Subscribe & Listen
 //!
 //! ```should_panic
-//! #![feature(async_await)]
 //! # use futures::stream::StreamExt;
 //! # use std::io;
 //! use tokio_i3ipc::{event::{Event,Subscribe}, I3};
@@ -47,7 +45,6 @@
 //! call any of the `get_*` functions on [I3](struct.I3.html).
 //!
 //! ```should_panic
-//! #![feature(async_await)]
 //! use std::io;
 //!
 //! use tokio_i3ipc::{reply, I3};
@@ -66,7 +63,6 @@
 //! All the `get_*` functions on [I3](struct.I3.html) are simple wrappers around
 //! two main async functions. You could write any of them yourself, in fact:
 //! ```should_panic
-//! #![feature(async_await)]
 //! # use std::io;
 //! use tokio_i3ipc::{msg, reply, MsgResponse, I3};
 //!

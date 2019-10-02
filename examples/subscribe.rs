@@ -1,4 +1,3 @@
-#![feature(async_await)]
 use futures::stream::StreamExt;
 use std::io;
 

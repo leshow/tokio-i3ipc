@@ -6,7 +6,7 @@ use tokio_i3ipc::{
     I3,
 };
 
-#[tokio::main]
+#[tokio::main(single_thread)]
 async fn main() -> io::Result<()> {
     let mut i3 = I3::connect().await?;
     let resp = i3.subscribe([Subscribe::Window]).await?;

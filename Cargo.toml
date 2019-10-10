@@ -14,14 +14,18 @@ readme = "README.md"
 keywords = ["i3", "ipc", "tokio", "async", "protocol"]
 repository = "https://github.com/leshow/tokio-i3ipc"
 
+[features]
+default = ["tokio"]
+asyncstd = ["async-std"]
+
 [dependencies]
 bytes = "0.4"
 serde = "1.0"
 serde_json = "1.0"
-futures-preview = "0.3.0-alpha.18"
+futures-preview = { version = "0.3.0-alpha.19", features = ["async-await"] }
 i3ipc-types = { version = "0.6", path = "i3ipc-types", features = ["async-traits"] }
-tokio-net = { version = "=0.2.0-alpha.2", features = ["async-traits", "uds"] }
-tokio = { version = "=0.2.0-alpha.2", features = ["io", "codec", "net", "uds"] }
+tokio = { version = "=0.2.0-alpha.6", features = ["io", "codec", "net", "uds"], optional = true }
+async-std = { version = "0.99", optional = true }
 
 [dev-dependencies]
 version-sync = "0.8"
@@ -36,6 +40,11 @@ path = "examples/subscribe.rs"
 [[example]]
 name = "workspaces"
 path = "examples/workspaces.rs"
+
+[[example]]
+name = "asyncstd_workspace"
+path = "examples/asyncstd_workspace.rs"
+required-features = ["asyncstd"]
 
 [badges]
 travis-ci = { repository = "leshow/tokio-i3ipc", branch = "master", service = "github" }

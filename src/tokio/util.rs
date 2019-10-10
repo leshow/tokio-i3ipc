@@ -1,8 +1,8 @@
-use crate::*;
+use i3ipc_types::{decode_event, event, MsgResponse, MAGIC};
 
 use serde::de::DeserializeOwned;
 use std::io as stio;
-use tokio::io::AsyncRead;
+use tokio::io::{AsyncRead, AsyncReadExt};
 
 /// Convenience function that decodes a single response and passes the type and
 /// undecoded buffer to a closure

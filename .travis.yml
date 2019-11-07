@@ -1,11 +1,11 @@
 language: rust
 rust:
-  # - stable
+  - stable
   - nightly
 
 branches:
   only:
-  - master
+    - master
 
 before_install:
   - export RUSTFLAGS="-D warnings"

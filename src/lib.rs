@@ -86,15 +86,15 @@ pub use util::*;
 use serde::de::DeserializeOwned;
 use std::io;
 use tokio::{
-    codec::FramedRead,
     io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt},
+    net::UnixStream,
 };
-use tokio_net::uds::UnixStream;
+use tokio_util::codec::FramedRead;
 
 /// [I3IPC](trait.I3IPC.html) provides default implementations for
 /// reading/writing buffers into a format i3 understands. This trait expresses
 /// that + asynchronousity
-pub trait AsyncI3IPC: AsyncRead + AsyncWrite + AsyncReadExt + AsyncWriteExt + I3Protocol {}
+pub trait AsyncI3IPC: AsyncRead + AsyncWrite + I3Protocol {}
 
 /// Add the default trait to `UnixStream`
 impl AsyncI3IPC for UnixStream {}

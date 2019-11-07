@@ -21,7 +21,7 @@
 //! }
 //! ```
 use bytes::BytesMut;
-use tokio::codec::Decoder;
+use tokio_util::codec::Decoder;
 
 use i3ipc_types::{decode_event, event, MAGIC};
 

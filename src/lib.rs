@@ -86,20 +86,21 @@ pub use util::*;
 use serde::de::DeserializeOwned;
 use std::io;
 use tokio::{
-    io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt},
+    io::{AsyncReadExt, AsyncWriteExt},
     net::UnixStream,
 };
 use tokio_util::codec::FramedRead;
 
 /// [I3IPC](trait.I3IPC.html) provides default implementations for
 /// reading/writing buffers into a format i3 understands. This trait expresses
-/// that + asynchronousity
-pub trait AsyncI3IPC: AsyncRead + AsyncWrite + I3Protocol {}
+/// that + asynchronicity
+// pub trait AsyncI3IPC: AsyncRead + AsyncWrite + I3Protocol {}
 
 /// Add the default trait to `UnixStream`
-impl AsyncI3IPC for UnixStream {}
-impl<'a, T: ?Sized + AsyncI3IPC + Unpin> AsyncI3IPC for &'a mut T {}
-impl<T: ?Sized + AsyncI3IPC + Unpin> AsyncI3IPC for Box<T> {}
+/// (TODO: appears now unnecessary because of the blanket impl for I3Protocol)
+// impl AsyncI3IPC for UnixStream {}
+// impl<'a, T: ?Sized + AsyncI3IPC + Unpin> AsyncI3IPC for &'a mut T {}
+// impl<T: ?Sized + AsyncI3IPC + Unpin> AsyncI3IPC for Box<T> {}
 
 /// Newtype wrapper for `UnixStream` that implements i3's IPC
 #[derive(Debug)]

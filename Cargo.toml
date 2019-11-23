@@ -15,13 +15,13 @@ keywords = ["i3", "ipc", "tokio", "async", "protocol"]
 repository = "https://github.com/leshow/tokio-i3ipc"
 
 [dependencies]
-bytes = "0.4"
+bytes = { git = "https://github.com/tokio-rs/bytes" }
 serde = "1.0"
 serde_json = "1.0"
 futures = "0.3"
 i3ipc-types = { version = "0.6", path = "i3ipc-types", features = ["async-traits"] }
-tokio-util = { git = "https://github.com/tokio-rs/tokio" }
-tokio = { git = "https://github.com/tokio-rs/tokio", features = ["io", "net-full"] }
+tokio-util = { git = "https://github.com/tokio-rs/tokio", features = ["codec"] }
+tokio = { git = "https://github.com/tokio-rs/tokio", features = ["full"] }
 
 [dev-dependencies]
 version-sync = "0.8"

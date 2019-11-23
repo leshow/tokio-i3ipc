@@ -20,7 +20,7 @@
 //!     Ok(())
 //! }
 //! ```
-use bytes::BytesMut;
+use bytes::{buf::Buf, BytesMut};
 use tokio_util::codec::Decoder;
 
 use i3ipc_types::{decode_event, event, MAGIC};

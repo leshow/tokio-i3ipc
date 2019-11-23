@@ -6,10 +6,7 @@ use tokio_i3ipc::{
     I3,
 };
 
-// This will spawn the default scheduler which spawns 1 thread per core
-// You can use #[tokio::main(basic_scheduler)] to use a single thread (you don't
-// need anything more)
-#[tokio::main]
+#[tokio::main(basic_scheduler)]
 async fn main() -> io::Result<()> {
     let mut i3 = I3::connect().await?;
     let resp = i3.subscribe([Subscribe::Window]).await?;

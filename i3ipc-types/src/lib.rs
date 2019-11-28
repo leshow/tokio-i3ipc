@@ -96,6 +96,10 @@ impl<T: AsyncRead + AsyncWrite> I3Protocol for T {}
 // the protocol implemented for free
 impl<T: io::Read + io::Write + I3Protocol> I3IPC for T {}
 
+#[cfg(not(feature = "async-traits"))]
+impl<T: io::Read + io::Write> I3Protocol for T {}
+
+// #[cfg(not(feature = "async-traits"))]
 /// Instead of returning an enum, we're returning a struct containing the `Msg`
 /// type and some body. An advantage to this over the enum method is that there
 /// is no minimum memory size that we must have. This is helpful when some

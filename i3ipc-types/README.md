@@ -9,6 +9,12 @@ This crate includes the definitions for all i3 ipc message responses, event type
 
 My goal is to locate all of the type definitions for i3's IPC implementation here, so no one ever has to go through the tedium again. If anything is missing or not working, please fill out an issue or submit a PR, I'm happy to fix things or improve the library in any way I can.
 
+## Features
+
+By default this crate will include features for synchronous IO. Using `std`s `io::Read + io::Write`
+
+If `async-traits` is enabled, `I3Protocol` will be implemented for any trait that implements tokio's `AsyncRead + AsyncWrite`
+
 ## Advantages over i3ipc-rs
 
 `i3ipc-rs` packs the event responses into a single enum, this is wasteful if you intend to receive responses to events for anything except workspaces & windows, since there is no indirection in the type definiton. Rust's memory layout for enums makes each variant take up to the size of the largest variant, that means that responses with relatively few fields like `OutputData` would take up as much space as `WindowData`. In this crate, that's not the case. There's a layer of indirection for `WorkspaceData` and `WindowData` so that the minimum variant size remains small.

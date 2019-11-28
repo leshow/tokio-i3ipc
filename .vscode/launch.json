@@ -10,6 +10,7 @@
       "request": "launch",
       "program": "./target/debug/examples/single_thread",
       "cwd": "${workspaceRoot}",
+      "sourceLanguages": ["rust"],
       "args": []
     }
   ]

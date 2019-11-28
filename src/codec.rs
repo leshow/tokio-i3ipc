@@ -8,7 +8,7 @@
 //! # use std::io;
 //! use tokio_i3ipc::{event::Subscribe, I3};
 //!
-//! #[tokio::main]
+//! #[tokio::main(basic_scheduler)]
 //! async fn main() -> io::Result<()> {
 //!     let mut i3 = I3::connect().await?;
 //!     i3.subscribe([Subscribe::Window]).await?;

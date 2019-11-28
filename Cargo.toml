@@ -15,16 +15,17 @@ keywords = ["i3", "ipc", "tokio", "async", "protocol"]
 repository = "https://github.com/leshow/tokio-i3ipc"
 
 [dependencies]
-bytes = { git = "https://github.com/tokio-rs/bytes" }
+bytes = "0.5"
 serde = "1.0"
 serde_json = "1.0"
 futures = "0.3"
 i3ipc-types = { version = "0.6", path = "i3ipc-types", features = ["async-traits"] }
-tokio-util = { git = "https://github.com/tokio-rs/tokio", features = ["codec"] }
-tokio = { git = "https://github.com/tokio-rs/tokio", features = ["full"] }
+tokio-util = { version = "0.2", features = ["codec"] }
+tokio = { version = "0.2", features = ["io-std", "io-util", "net"] }
 
 [dev-dependencies]
 version-sync = "0.8"
+tokio = { version = "0.2", features = ["io-std", "io-util", "net", "macros"] }
 
 [workspace]
 members = ["./", "i3-ipc", "i3ipc-types"]
@@ -36,6 +37,10 @@ path = "examples/subscribe.rs"
 [[example]]
 name = "workspaces"
 path = "examples/workspaces.rs"
+
+[[example]]
+name = "single_thread"
+path = "examples/single_thread.rs"
 
 [badges]
 travis-ci = { repository = "leshow/tokio-i3ipc", branch = "master", service = "github" }

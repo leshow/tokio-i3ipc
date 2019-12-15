@@ -58,7 +58,7 @@ pub struct Node {
     pub focused: bool,
     pub focus: Vec<i64>,
     pub sticky: bool,
-    pub floating: Floating,
+    pub floating: Option<Floating>,
     pub floating_nodes: Vec<Node>,
     pub fullscreen_mode: FullscreenMode,
     pub nodes: Vec<Node>,

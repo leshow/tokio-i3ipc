@@ -45,6 +45,7 @@ pub struct Node {
     pub name: Option<String>,
     #[serde(rename = "type")]
     pub node_type: NodeType,
+    pub layout: NodeLayout,
     pub output: Option<String>,
     pub orientation: NodeOrientation,
     pub border: NodeBorder,

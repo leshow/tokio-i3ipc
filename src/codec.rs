@@ -3,8 +3,8 @@
 //! Using `EventCodec` to subscribe to [event::Event](../event/enum.Event.html)
 //! from i3:
 //!
-//! ```should_panic
-//! # use futures::stream::StreamExt;
+//! ```no_run
+//! # use tokio::stream::StreamExt;
 //! # use std::io;
 //! use tokio_i3ipc::{event::Subscribe, I3};
 //!

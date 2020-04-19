@@ -1,5 +1,5 @@
 #![doc(html_root_url = "https://docs.rs/tokio-i3ipc/0.6.0")]
-//! # tokio-i3ipc  
+//! # tokio-i3ipc
 //!
 //! This crate provides types and functions for working with i3's IPC protocol
 //! in an async context and with tokio. It re-exports the subcrate `i3ipc-types`
@@ -12,8 +12,8 @@
 //!
 //! ## Subscribe & Listen
 //!
-//! ```should_panic
-//! # use futures::stream::StreamExt;
+//! ```no_run
+//! # use tokio::stream::StreamExt;
 //! # use std::io;
 //! use tokio_i3ipc::{event::{Event,Subscribe}, I3};
 //!
@@ -44,7 +44,7 @@
 //! To [send messages](https://i3wm.org/docs/ipc.html#_sending_messages_to_i3) to i3,
 //! call any of the `get_*` functions on [I3](struct.I3.html).
 //!
-//! ```should_panic
+//! ```no_run
 //! use std::io;
 //!
 //! use tokio_i3ipc::{reply, I3};
@@ -62,7 +62,7 @@
 //!
 //! All the `get_*` functions on [I3](struct.I3.html) are simple wrappers around
 //! two main async functions. You could write any of them yourself, in fact:
-//! ```should_panic
+//! ```no_run
 //! # use std::io;
 //! use tokio_i3ipc::{msg, reply, MsgResponse, I3};
 //!

@@ -44,7 +44,7 @@
 //! To [send messages](https://i3wm.org/docs/ipc.html#_sending_messages_to_i3) to i3,
 //! call any of the `get_*` functions on [I3](struct.I3.html).
 //!
-//! ```
+//! ```no_run
 //! use std::io;
 //!
 //! use tokio_i3ipc::{reply, I3};
@@ -62,7 +62,7 @@
 //!
 //! All the `get_*` functions on [I3](struct.I3.html) are simple wrappers around
 //! two main async functions. You could write any of them yourself, in fact:
-//! ```
+//! ```no_run
 //! # use std::io;
 //! use tokio_i3ipc::{msg, reply, MsgResponse, I3};
 //!

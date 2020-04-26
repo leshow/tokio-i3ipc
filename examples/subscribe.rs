@@ -1,4 +1,4 @@
-use futures::stream::StreamExt;
+use tokio::stream::StreamExt;
 use std::io;
 
 use tokio_i3ipc::{

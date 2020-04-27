@@ -54,7 +54,7 @@ pub struct Node {
     pub window_rect: Rect,
     pub deco_rect: Rect,
     pub geometry: Rect,
-    pub window_properties: Option<HashMap<WindowProperty, Option<String>>>,
+    pub window_properties: Option<WindowProperties>, // Option<HashMap<WindowProperty, Option<String>>>,
     pub urgent: bool,
     pub focused: bool,
     pub focus: Vec<i64>,
@@ -65,7 +65,101 @@ pub struct Node {
     pub nodes: Vec<Node>,
 }
 
-#[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
+#[derive(Eq, Serialize, PartialEq, Clone, Debug)]
+pub struct WindowProperties {
+    title: Option<String>,
+    instance: Option<String>,
+    class: Option<String>,
+    window_role: Option<String>,
+    transient_for: Option<u64>,
+}
+
+// impl serde::Serialize for WindowProperties {
+//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: serde::Serializer,
+//     {
+//         #[derive(Deserialize, Serialize, PartialEq, Clone, Debug)]
+//         struct Intermediate(HashMap<WindowProperty, Option<WindowData>>);
+
+//         #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
+//         #[serde(untagged)]
+//         enum WindowData {
+//             Str(String),
+//             Num(u64),
+//         }
+//         //  if serializer.is_human_readable() {
+//         //  format!("{}.{}", self.0, self.1).serialize(serializer)
+//         //  } else {
+//         //  (self.0, self.1).serialize(serializer)
+//         //  }
+//         let mut map =
+//         todo!()
+//     }
+// }
+
+impl<'de> serde::Deserialize<'de> for WindowProperties {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[derive(Deserialize, Serialize, PartialEq, Clone, Debug)]
+        struct Intermediate(HashMap<WindowProperty, Option<WindowData>>);
+
+        #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
+        #[serde(untagged)]
+        enum WindowData {
+            Str(String),
+            Num(u64),
+        }
+        impl WindowData {
+            fn unwrap_str(self) -> String {
+                match self {
+                    WindowData::Str(s) => s,
+                    _ => unreachable!("cant have non-string value"),
+                }
+            }
+
+            fn unwrap_num(self) -> u64 {
+                match self {
+                    WindowData::Num(n) => n,
+                    _ => unreachable!("cant have non-num value"),
+                }
+            }
+        }
+        let mut input = Intermediate::deserialize(deserializer)?;
+        let title = input
+            .0
+            .get_mut(&WindowProperty::Title)
+            .and_then(|x| x.take().map(|x| x.unwrap_str()));
+        let instance = input
+            .0
+            .get_mut(&WindowProperty::Instance)
+            .and_then(|x| x.take().map(|x| x.unwrap_str()));
+        let class = input
+            .0
+            .get_mut(&WindowProperty::Class)
+            .and_then(|x| x.take().map(|x| x.unwrap_str()));
+        let window_role = input
+            .0
+            .get_mut(&WindowProperty::WindowRole)
+            .and_then(|x| x.take().map(|x| x.unwrap_str()));
+        let transient_for = input
+            .0
+            .get_mut(&WindowProperty::TransientFor)
+            .and_then(|x| x.take().map(|x| x.unwrap_num()));
+
+        Ok(WindowProperties {
+            title,
+            instance,
+            class,
+            window_role,
+            transient_for,
+        })
+    }
+}
+
+#[derive(Deserialize, Serialize, Eq, PartialEq, Copy, Clone, Hash, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum Floating {
     AutoOff,
@@ -74,7 +168,7 @@ pub enum Floating {
     UserOn,
 }
 
-#[derive(Deserialize_repr, Serialize_repr, Eq, PartialEq, Clone, Hash, Debug)]
+#[derive(Deserialize_repr, Serialize_repr, Eq, PartialEq, Copy, Clone, Hash, Debug)]
 #[repr(u8)]
 pub enum FullscreenMode {
     None = 0,
@@ -82,7 +176,7 @@ pub enum FullscreenMode {
     Global = 2,
 }
 
-#[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
+#[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Copy, Hash, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum WindowProperty {
     Title,
@@ -100,7 +194,7 @@ pub struct Rect {
     pub height: usize,
 }
 
-#[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
+#[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug, Copy)]
 #[serde(rename_all = "snake_case")]
 pub enum NodeType {
     Root,
@@ -118,7 +212,7 @@ pub enum NodeBorder {
     Pixel,
 }
 
-#[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone)]
+#[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
 pub enum NodeLayout {
     SplitH,
@@ -129,7 +223,7 @@ pub enum NodeLayout {
     Output,
 }
 
-#[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone)]
+#[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
 pub enum NodeOrientation {
     Horizontal,
@@ -246,6 +340,14 @@ mod tests {
         use std::fs;
         let output = fs::read_to_string("./test/tree.json").unwrap();
         let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
+        assert!(o.is_ok());
+    }
+    #[test]
+    fn test_other_tree() {
+        use std::fs;
+        let output = fs::read_to_string("./test/other_tree.json").unwrap();
+        let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
+        println!("{:?}", o);
         assert!(o.is_ok());
     }
     #[test]

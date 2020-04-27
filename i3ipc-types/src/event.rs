@@ -5,7 +5,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::reply;
 
-#[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
+#[derive(Deserialize, Serialize, PartialEq, Debug, Clone, Copy)]
 #[serde(rename_all = "snake_case")]
 pub enum Subscribe {
     Workspace,
@@ -62,7 +62,7 @@ pub enum Event {
     Tick(TickData),
 }
 
-#[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone)]
+#[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Copy, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum WorkspaceChange {
     Focus,
@@ -99,7 +99,7 @@ pub struct WindowData {
     pub container: reply::Node,
 }
 
-#[derive(Deserialize, Serialize, Eq, Hash, PartialEq, Debug, Clone)]
+#[derive(Deserialize, Serialize, Eq, Hash, PartialEq, Debug, Clone, Copy)]
 #[serde(rename_all = "snake_case")]
 pub enum WindowChange {
     ///  the window has become managed by i3  
@@ -139,7 +139,7 @@ pub struct BindingObject {
     pub input_type: BindType,
 }
 
-#[derive(Deserialize, Serialize, Eq, Hash, PartialEq, Debug, Clone)]
+#[derive(Deserialize, Serialize, Eq, Hash, PartialEq, Debug, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
 pub enum BindType {
     Keyboard,
@@ -151,7 +151,7 @@ pub struct ShutdownData {
     pub change: ShutdownChange,
 }
 
-#[derive(Deserialize, Serialize, Eq, Hash, PartialEq, Debug, Clone)]
+#[derive(Deserialize, Serialize, Eq, Hash, PartialEq, Debug, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
 pub enum ShutdownChange {
     Restart,

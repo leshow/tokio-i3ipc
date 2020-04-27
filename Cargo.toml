@@ -1,6 +1,6 @@
 [package]
 name = "tokio-i3ipc"
-version = "0.6.0"
+version = "0.8.0"
 authors = ["Evan Cameron <cameron.evan@gmail.com>"]
 edition = "2018"
 description = """
@@ -18,12 +18,12 @@ repository = "https://github.com/leshow/tokio-i3ipc"
 bytes = "0.5"
 serde = "1.0"
 serde_json = "1.0"
-i3ipc-types = { version = "0.7", path = "i3ipc-types", features = ["async-traits"] }
-tokio-util = { version = "0.2", features = ["codec"] }
-tokio = { version = "0.2.3", features = ["io-std", "io-util", "net", "macros", "stream"] }
+i3ipc-types = { version = "0.8", path = "i3ipc-types", features = ["async-traits"] }
+tokio-util = { version = "0.3", features = ["codec"] }
+tokio = { version = "0.2.19", features = ["io-std", "io-util", "net", "macros", "stream"] }
 
 [dev-dependencies]
-version-sync = "0.8"
+version-sync = "0.9"
 
 [workspace]
 members = ["./", "i3-ipc", "i3ipc-types"]

@@ -1,5 +1,5 @@
-use tokio::stream::StreamExt;
 use std::io;
+use tokio::stream::StreamExt;
 
 use tokio_i3ipc::{
     event::{Event, Subscribe},

@@ -330,7 +330,13 @@ mod tests {
         use std::fs;
         let output = fs::read_to_string("./test/other_tree.json").unwrap();
         let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
-        println!("{:?}", o);
+        assert!(o.is_ok());
+    }
+    #[test]
+    fn test_last_tree() {
+        use std::fs;
+        let output = fs::read_to_string("./test/last_tree.json").unwrap();
+        let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
         assert!(o.is_ok());
     }
     #[test]

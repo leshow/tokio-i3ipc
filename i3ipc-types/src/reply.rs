@@ -38,8 +38,7 @@ pub struct Output {
 }
 
 /// Tree/Node reply
-#[derive(Deserialize, Serialize, PartialEq, Clone, Debug)]
-// TODO manually impl Eq
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Node {
     pub id: usize,
     pub name: Option<String>,
@@ -54,7 +53,7 @@ pub struct Node {
     pub window_rect: Rect,
     pub deco_rect: Rect,
     pub geometry: Rect,
-    pub window_properties: Option<WindowProperties>, // Option<HashMap<WindowProperty, Option<String>>>,
+    pub window_properties: Option<WindowProperties>,
     pub urgent: bool,
     pub focused: bool,
     pub focus: Vec<i64>,
@@ -65,6 +64,14 @@ pub struct Node {
     pub nodes: Vec<Node>,
 }
 
+impl PartialEq for Node {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Eq for Node {}
+
 #[derive(Eq, Serialize, PartialEq, Clone, Debug)]
 pub struct WindowProperties {
     title: Option<String>,
@@ -73,30 +80,6 @@ pub struct WindowProperties {
     window_role: Option<String>,
     transient_for: Option<u64>,
 }
-
-// impl serde::Serialize for WindowProperties {
-//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-//     where
-//         S: serde::Serializer,
-//     {
-//         #[derive(Deserialize, Serialize, PartialEq, Clone, Debug)]
-//         struct Intermediate(HashMap<WindowProperty, Option<WindowData>>);
-
-//         #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
-//         #[serde(untagged)]
-//         enum WindowData {
-//             Str(String),
-//             Num(u64),
-//         }
-//         //  if serializer.is_human_readable() {
-//         //  format!("{}.{}", self.0, self.1).serialize(serializer)
-//         //  } else {
-//         //  (self.0, self.1).serialize(serializer)
-//         //  }
-//         let mut map =
-//         todo!()
-//     }
-// }
 
 impl<'de> serde::Deserialize<'de> for WindowProperties {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>

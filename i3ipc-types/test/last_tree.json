@@ -1,0 +1,55 @@
+{
+  "id": 94544255731616,
+  "type": "con",
+  "orientation": "none",
+  "scratchpad_state": "none",
+  "percent": 1,
+  "urgent": false,
+  "focused": false,
+  "output": "eDP-1-1",
+  "layout": "splith",
+  "workspace_layout": "default",
+  "last_split_layout": "splith",
+  "border": "normal",
+  "current_border_width": -1,
+  "rect": {
+    "x": 2142,
+    "y": 996,
+    "width": 882,
+    "height": 152
+  },
+  "deco_rect": {
+    "x": 0,
+    "y": 0,
+    "width": 882,
+    "height": 26
+  },
+  "window_rect": {
+    "x": 4,
+    "y": 0,
+    "width": 874,
+    "height": 148
+  },
+  "geometry": {
+    "x": 2142,
+    "y": 996,
+    "width": 874,
+    "height": 148
+  },
+  "name": "name",
+  "window": 100663361,
+  "window_type": "splash",
+  "window_properties": {
+    "class": "[class]",
+    "instance": "[instance]",
+    "title": "[title]",
+    "transient_for": 100663306
+  },
+  "nodes": [],
+  "floating_nodes": [],
+  "focus": [],
+  "fullscreen_mode": 0,
+  "sticky": false,
+  "floating": "user_on",
+  "swallows": []
+}

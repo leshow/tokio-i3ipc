@@ -54,7 +54,7 @@ pub struct Node {
     pub deco_rect: Rect,
     pub geometry: Rect,
     pub window_properties: Option<WindowProperties>,
-    pub current_border_width: usize,
+    pub current_border_width: i32,
     pub urgent: bool,
     pub focused: bool,
     pub focus: Vec<usize>,

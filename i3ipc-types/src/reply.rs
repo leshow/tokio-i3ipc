@@ -16,6 +16,7 @@ pub type Workspaces = Vec<Workspace>;
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
 pub struct Workspace {
+    pub id: usize,
     pub num: usize,
     pub name: String,
     pub visible: bool,
@@ -53,9 +54,12 @@ pub struct Node {
     pub window_rect: Rect,
     pub deco_rect: Rect,
     pub geometry: Rect,
+    pub window: Option<u32>,
     pub window_properties: Option<WindowProperties>,
+    pub window_type: Option<WindowType>,
     pub current_border_width: i32,
     pub urgent: bool,
+    pub marks: Option<Marks>,
     pub focused: bool,
     pub focus: Vec<usize>,
     pub sticky: bool,
@@ -168,6 +172,23 @@ pub enum WindowProperty {
     Class,
     WindowRole,
     TransientFor,
+}
+
+#[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Copy, Hash, Debug)]
+#[serde(rename_all = "snake_case")]
+pub enum WindowType {
+    Normal,
+    Dock,
+    Dialog,
+    Utility,
+    Toolbar,
+    Splash,
+    Menu,
+    DropdownMenu,
+    PopupMenu,
+    Tooltip,
+    Notification,
+    Unknown,
 }
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]

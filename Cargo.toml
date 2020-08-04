@@ -26,7 +26,7 @@ tokio = { version = "0.2.19", features = ["io-std", "io-util", "net", "macros", 
 version-sync = "0.9"
 
 [workspace]
-members = ["./", "i3-ipc", "i3ipc-types"]
+members = ["./", "i3-ipc", "i3ipc-types", "async-i3ipc"]
 
 [[example]]
 name = "subscribe"

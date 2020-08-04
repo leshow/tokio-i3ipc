@@ -7,6 +7,9 @@ use std::{env, io, process::Command};
 #[cfg(feature = "async-traits")]
 use tokio::io::{AsyncRead, AsyncWrite};
 
+#[cfg(feature = "async-std-traits")]
+use async_std::io::{Read as AsyncStdRead, Write as AsyncStdWrite};
+
 pub mod event;
 pub mod msg;
 pub mod reply;
@@ -89,14 +92,17 @@ pub trait I3IPC: io::Read + io::Write + I3Protocol {
     }
 }
 
-#[cfg(feature = "async-traits")]
+#[cfg(all(feature = "async-traits", not(feature = "async-std-traits")))]
 impl<T: AsyncRead + AsyncWrite> I3Protocol for T {}
+
+#[cfg(all(feature = "async-std-traits", not(feature = "async-traits")))]
+impl<T: AsyncStdRead + AsyncStdWrite> I3Protocol for T {}
 
 // Any type which brings `I3IPC` into scope and implements Read and Write gets
 // the protocol implemented for free
 impl<T: io::Read + io::Write + I3Protocol> I3IPC for T {}
 
-#[cfg(not(feature = "async-traits"))]
+#[cfg(all(not(feature = "async-traits"), not(feature = "async-std-traits")))]
 impl<T: io::Read + io::Write> I3Protocol for T {}
 
 // #[cfg(not(feature = "async-traits"))]

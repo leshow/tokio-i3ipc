@@ -1,28 +1,3 @@
-//! Implements `tokio_codec`'s `Decoder` trait
-//!
-//! Using `EventCodec` to subscribe to [event::Event](../event/enum.Event.html)
-//! from i3:
-//!
-//! ```no_run
-//! # use tokio::stream::StreamExt;
-//! # use std::io;
-//! use tokio_i3ipc::{event::Subscribe, I3};
-//!
-//! #[tokio::main(basic_scheduler)]
-//! async fn main() -> io::Result<()> {
-//!     let mut i3 = I3::connect().await?;
-//!     i3.subscribe([Subscribe::Window]).await?;
-//!
-//!     let mut listener = i3.listen();
-//!     while let Some(event) = listener.next().await {
-//!         println!("{:#?}", event);
-//!     }
-//!     Ok(())
-//! }
-//! ```
-// use bytes::{buf::Buf, BytesMut};
-// use tokio_util::codec::Decoder;
-
 use async_std::{
     io::{Read, ReadExt},
     os::unix::net::UnixStream,
@@ -36,10 +11,6 @@ use std::{
     task::{Context, Poll},
 };
 
-/// This codec only impls `Decoder` because it's only job is to read messages
-/// from i3 and turn them into frames of Events. All other interactions with i3
-/// over the IPC are simple send/receive operations. Events received will be
-/// relative to what was subscribed.
 pub struct EventStream {
     inner: UnixStream,
 }

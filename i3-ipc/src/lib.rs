@@ -2,7 +2,7 @@
 //!
 //! Subscribing to events is easy:
 //!
-//! ```rust
+//! ```no_run
 //! use i3_ipc::{
 //!     event::{Event, Subscribe},
 //!     I3Stream,
@@ -30,7 +30,7 @@
 //! Getting information is equally easy, use any `get_*` method or `run_command`
 //! to send a message to i3:
 //!
-//! ```rust
+//! ```no_run
 //! use i3_ipc::{Connect, I3};
 //! use std::io;
 //!

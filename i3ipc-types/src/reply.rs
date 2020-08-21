@@ -324,7 +324,7 @@ mod tests {
 
     #[test]
     fn test_workspace() {
-        let output = "{\"num\":2,\"name\":\"2\",\"visible\":false,\"focused\":false,\"rect\":{\"x\":2560,\"y\":29,\"width\":2560,\"height\":1571},\"output\":\"DVI-I-3\",\"urgent\":false}";
+        let output = "{\"id\":1,\"num\":2,\"name\":\"2\",\"visible\":false,\"focused\":false,\"rect\":{\"x\":2560,\"y\":29,\"width\":2560,\"height\":1571},\"output\":\"DVI-I-3\",\"urgent\":false}";
         let o: Result<Workspace, serde_json::error::Error> = serde_json::from_str(output);
         assert!(o.is_ok());
     }

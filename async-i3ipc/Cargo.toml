@@ -16,11 +16,14 @@ i3ipc-types = { path = "../i3ipc-types", features = ["async-std-traits"] }
 [[example]]
 name = "subscribe"
 path = "examples/subscribe.rs"
+required-features = ["async-std/attributes"]
 
 [[example]]
 name = "workspaces"
 path = "examples/workspaces.rs"
+required-features = ["async-std/attributes"]
 
 [[example]]
 name = "get_tree"
 path = "examples/get_tree.rs"
+required-features = ["async-std/attributes"]

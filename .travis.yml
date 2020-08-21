@@ -30,7 +30,9 @@ script:
   #   cargo fmt --all -- --check &&
   #   cargo clippy --all --tests --examples -- --deny clippy::all;
   #   fi
-  - env RUST_BACKTRACE=1 RUST_LOG=tokio_i3ipc=trace cargo test -- --nocapture
+  - for dir in . i3ipc-types i3-ipc async-i3ipc; do
+      env RUST_BACKTRACE=1 RUST_LOG=tokio_i3ipc=trace cargo test --manifest-path $dir/Cargo.toml -- --nocapture;
+    done
   - if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then
     cargo test --doc README;
     fi

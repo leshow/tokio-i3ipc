@@ -3,6 +3,17 @@ name = "async-i3ipc"
 version = "0.1.0"
 authors = ["Evan Cameron <cameron.evan@gmail.com>"]
 edition = "2018"
+description = """
+Bindings for i3 and async-std allowing async applications to communicate with i3 over
+it's IPC interface. Contains futures implementations and convenience functions
+for working with i3.
+"""
+categories = ["api-bindings", "asynchronous", "parsing", "gui"]
+license = "MIT"
+readme = "README.md"
+keywords = ["i3", "ipc", "tokio", "async", "protocol"]
+repository = "https://github.com/leshow/tokio-i3ipc/tree/master/async-i3ipc"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -10,7 +21,7 @@ edition = "2018"
 async-std = { version = "1.6.2", features = ["attributes"] }
 serde = "1.0"
 serde_json = "1.0"
-i3ipc-types = { path = "../i3ipc-types", features = ["async-std-traits"] }
+i3ipc-types = { version = "0.9", path = "../i3ipc-types", features = ["async-std-traits"] }
 
 [dev-dependencies]
 version-sync = "0.9"

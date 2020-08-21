@@ -12,10 +12,8 @@
 //!
 //! ## Subscribe & Listen
 //!
-//! ```no_run
-//! use async_std::stream::Stream;
+//! ```rust,no_run
 //! use std::io;
-//!
 //! use async_i3ipc::{
 //!     event::{Event, Subscribe},
 //!     I3,
@@ -28,8 +26,8 @@
 //!
 //!     println!("{:#?}", resp);
 //!     let mut listener = i3.listen();
-//!     while let Some(event) = listener.next().await {
-//!         match event? {
+//!     while let Ok(event) = listener.next().await {
+//!         match event {
 //!             Event::Workspace(ev) => println!("workspace change event {:?}", ev),
 //!             Event::Window(ev) => println!("window event {:?}", ev),
 //!             Event::Output(ev) => println!("output event {:?}", ev),
@@ -52,7 +50,6 @@
 //!
 //! ```no_run
 //! use std::io;
-//!
 //! use async_i3ipc::{reply, I3};
 //!
 //! #[async_std::main]

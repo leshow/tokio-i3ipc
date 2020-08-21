@@ -1,10 +1,8 @@
-use async_std::stream::{Stream, StreamExt};
-use std::io;
-
 use async_i3ipc::{
     event::{Event, Subscribe},
     I3,
 };
+use std::io;
 
 // This will spawn the default scheduler which spawns 1 thread per core
 // You can use #[tokio::main(basic_scheduler)] to use a single thread (you don't
@@ -16,8 +14,8 @@ async fn main() -> io::Result<()> {
 
     println!("{:#?}", resp);
     let mut listener = i3.listen();
-    while let Some(event) = listener.next().await {
-        match event? {
+    while let Ok(event) = listener.next().await {
+        match event {
             Event::Workspace(ev) => println!("workspace change event {:?}", ev),
             Event::Window(ev) => println!("window event {:?}", ev),
             Event::Output(ev) => println!("output event {:?}", ev),

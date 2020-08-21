@@ -12,6 +12,8 @@ serde = "1.0"
 serde_json = "1.0"
 i3ipc-types = { path = "../i3ipc-types", features = ["async-std-traits"] }
 
+[dev-dependencies]
+version-sync = "0.9"
 
 [[example]]
 name = "subscribe"

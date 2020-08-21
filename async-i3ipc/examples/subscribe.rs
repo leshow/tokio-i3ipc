@@ -1,4 +1,4 @@
-use async_std::stream::Stream;
+use async_std::stream::{Stream, StreamExt};
 use std::io;
 
 use async_i3ipc::{

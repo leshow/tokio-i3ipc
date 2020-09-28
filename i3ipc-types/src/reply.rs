@@ -16,7 +16,7 @@ pub type Workspaces = Vec<Workspace>;
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
 pub struct Workspace {
-    pub id: usize,
+    pub id: Option<usize>,
     pub num: usize,
     pub name: String,
     pub visible: bool,
@@ -43,6 +43,7 @@ pub struct Output {
 pub struct Node {
     pub id: usize,
     pub name: Option<String>,
+    pub num: Option<String>,
     #[serde(rename = "type")]
     pub node_type: NodeType,
     pub layout: NodeLayout,

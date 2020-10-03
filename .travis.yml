@@ -24,7 +24,7 @@ cache:
     - $HOME/.local/share/
 
 script:
-  - cargo fmt --all -- --check
+  - '[ "$TRAVIS_RUST_VERSION" != "nightly" ] || cargo fmt --all -- --check'
 
   - cargo clippy --all --tests --examples -- --deny clippy::all;
 

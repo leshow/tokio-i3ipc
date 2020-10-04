@@ -16,7 +16,8 @@ pub type Workspaces = Vec<Workspace>;
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
 pub struct Workspace {
-    pub id: Option<usize>,
+    #[serde(default)]
+    pub id: usize,
     pub num: usize,
     pub name: String,
     pub visible: bool,

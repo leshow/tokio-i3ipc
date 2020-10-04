@@ -1,5 +1,5 @@
 //! Contains structs for deserializing messages from i3
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use std::collections::HashMap;

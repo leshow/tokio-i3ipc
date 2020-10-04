@@ -4,10 +4,10 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use std::{env, io, process::Command};
 
-#[cfg(feature = "async-traits")]
+#[cfg(all(feature = "async-traits", not(feature = "async-std-traits")))]
 use tokio::io::{AsyncRead, AsyncWrite};
 
-#[cfg(feature = "async-std-traits")]
+#[cfg(all(feature = "async-std-traits", not(feature = "async-traits")))]
 use async_std::io::{Read as AsyncStdRead, Write as AsyncStdWrite};
 
 pub mod event;

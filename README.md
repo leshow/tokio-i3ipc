@@ -9,8 +9,8 @@ This crate provides types and functions for working with i3's IPC protocol withi
 I expect the most common use case will be to subscribe to some events and listen:
 
 ```rust
-use futures::stream::StreamExt;
 use std::io;
+use tokio::stream::StreamExt;
 use tokio_i3ipc::{
     event::{Event, Subscribe},
     I3,

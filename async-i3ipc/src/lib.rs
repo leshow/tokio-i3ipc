@@ -89,9 +89,6 @@ pub use util::*;
 use async_std::{os::unix::net::UnixStream, prelude::*};
 use serde::de::DeserializeOwned;
 use std::io;
-use async_std::io::{Read as AsyncStdRead, Write as AsyncStdWrite};
-
-impl<T: AsyncStdRead + AsyncStdWrite> I3Protocol for T {}
 
 /// Newtype wrapper for `UnixStream` that implements i3's IPC
 #[derive(Debug)]

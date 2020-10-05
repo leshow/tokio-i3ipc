@@ -24,10 +24,10 @@ async-traits = ["tokio"]
 async-std-traits = ["async-std"]
 
 [dependencies.tokio]
-version = "0.2.3"
+version = "0.2"
 features = ["io-std"]
 optional = true
 
 [dependencies.async-std]
-version = "1.6.2"
+version = "1.6"
 optional = true

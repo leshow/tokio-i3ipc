@@ -330,18 +330,29 @@ mod tests {
         let o: Result<Workspace, serde_json::error::Error> = serde_json::from_str(output);
         assert!(o.is_ok());
     }
+
+    #[test]
+    fn test_workspace_no_id() {
+        let output = "{\"num\":2,\"name\":\"2\",\"visible\":false,\"focused\":false,\"rect\":{\"x\":2560,\"y\":29,\"width\":2560,\"height\":1571},\"output\":\"DVI-I-3\",\"urgent\":false}";
+        let o: Result<Workspace, serde_json::error::Error> = serde_json::from_str(output);
+        assert!(o.is_ok());
+        assert_eq!(o.unwrap().id, 0);
+    }
+
     #[test]
     fn test_binding_modes() {
         let output = "[\"resize\",\"default\"]";
         let o: Result<BindingModes, serde_json::error::Error> = serde_json::from_str(output);
         assert!(o.is_ok());
     }
+
     #[test]
     fn test_config() {
         let output = "{\"config\": \"some config data here\"}";
         let o: Result<Config, serde_json::error::Error> = serde_json::from_str(output);
         assert!(o.is_ok());
     }
+
     #[test]
     fn test_tree() {
         use std::fs;
@@ -349,6 +360,7 @@ mod tests {
         let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
         assert!(o.is_ok());
     }
+
     #[test]
     fn test_other_tree() {
         use std::fs;
@@ -356,6 +368,7 @@ mod tests {
         let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
         assert!(o.is_ok());
     }
+
     #[test]
     fn test_last_tree() {
         use std::fs;
@@ -363,6 +376,7 @@ mod tests {
         let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
         assert!(o.is_ok());
     }
+
     #[test]
     fn test_version() {
         use std::fs;

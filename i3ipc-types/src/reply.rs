@@ -355,7 +355,6 @@ mod tests {
 
     #[test]
     fn test_tree() {
-        use std::fs;
         let output = include_str!("../test/tree.json");
         let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
         assert!(o.is_ok());
@@ -363,7 +362,6 @@ mod tests {
 
     #[test]
     fn test_other_tree() {
-        use std::fs;
         let output = include_str!("../test/other_tree.json");
         let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
         dbg!(&o);
@@ -372,7 +370,6 @@ mod tests {
 
     #[test]
     fn test_last_tree() {
-        use std::fs;
         let output = include_str!("../test/last_tree.json");
         let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
         assert!(o.is_ok());
@@ -380,7 +377,6 @@ mod tests {
 
     #[test]
     fn test_version() {
-        use std::fs;
         let output = include_str!("../test/version.json");
         let o: Result<Version, serde_json::error::Error> = serde_json::from_str(&output);
         assert!(o.is_ok());

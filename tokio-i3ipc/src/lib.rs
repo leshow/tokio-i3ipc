@@ -91,17 +91,6 @@ use tokio::{
 };
 use tokio_util::codec::FramedRead;
 
-/// [I3IPC](trait.I3IPC.html) provides default implementations for
-/// reading/writing buffers into a format i3 understands. This trait expresses
-/// that + asynchronicity
-// pub trait AsyncI3IPC: AsyncRead + AsyncWrite + I3Protocol {}
-
-/// Add the default trait to `UnixStream`
-/// (TODO: appears now unnecessary because of the blanket impl for I3Protocol)
-// impl AsyncI3IPC for UnixStream {}
-// impl<'a, T: ?Sized + AsyncI3IPC + Unpin> AsyncI3IPC for &'a mut T {}
-// impl<T: ?Sized + AsyncI3IPC + Unpin> AsyncI3IPC for Box<T> {}
-
 /// Newtype wrapper for `UnixStream` that implements i3's IPC
 #[derive(Debug)]
 pub struct I3 {

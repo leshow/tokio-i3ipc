@@ -1,4 +1,3 @@
 [workspace]
-members = ["tokio-i3ipc", "i3ipc-types"]
-# each of these depend on a different version of i3ipc-types
-exclude = ["i3-ipc", "async-i3ipc"]
+members = ["tokio-i3ipc"]
+exclude = ["i3ipc-types", "i3-ipc", "async-i3ipc"]

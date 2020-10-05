@@ -44,7 +44,7 @@ pub struct Output {
 pub struct Node {
     pub id: usize,
     pub name: Option<String>,
-    pub num: Option<String>,
+    pub num: Option<i32>,
     #[serde(rename = "type")]
     pub node_type: NodeType,
     pub layout: NodeLayout,
@@ -356,7 +356,7 @@ mod tests {
     #[test]
     fn test_tree() {
         use std::fs;
-        let output = fs::read_to_string("./test/tree.json").unwrap();
+        let output = include_str!("../test/tree.json");
         let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
         assert!(o.is_ok());
     }
@@ -364,15 +364,16 @@ mod tests {
     #[test]
     fn test_other_tree() {
         use std::fs;
-        let output = fs::read_to_string("./test/other_tree.json").unwrap();
+        let output = include_str!("../test/other_tree.json");
         let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
+        dbg!(&o);
         assert!(o.is_ok());
     }
 
     #[test]
     fn test_last_tree() {
         use std::fs;
-        let output = fs::read_to_string("./test/last_tree.json").unwrap();
+        let output = include_str!("../test/last_tree.json");
         let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
         assert!(o.is_ok());
     }
@@ -380,7 +381,7 @@ mod tests {
     #[test]
     fn test_version() {
         use std::fs;
-        let output = fs::read_to_string("./test/version.json").unwrap();
+        let output = include_str!("../test/version.json");
         let o: Result<Version, serde_json::error::Error> = serde_json::from_str(&output);
         assert!(o.is_ok());
     }

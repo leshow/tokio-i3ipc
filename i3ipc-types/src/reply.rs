@@ -22,6 +22,7 @@ pub struct Workspace {
     pub name: String,
     pub visible: bool,
     pub focused: bool,
+    pub focus: Vec<usize>,
     pub urgent: bool,
     pub rect: Rect,
     pub output: String,
@@ -69,6 +70,7 @@ pub struct Node {
     pub floating_nodes: Vec<Node>,
     pub fullscreen_mode: FullscreenMode,
     pub nodes: Vec<Node>,
+    pub app_id: Option<String>,
 }
 
 impl PartialEq for Node {
@@ -81,11 +83,12 @@ impl Eq for Node {}
 
 #[derive(Eq, Serialize, PartialEq, Clone, Debug)]
 pub struct WindowProperties {
-    title: Option<String>,
-    instance: Option<String>,
-    class: Option<String>,
-    window_role: Option<String>,
-    transient_for: Option<u64>,
+    pub title: Option<String>,
+    pub instance: Option<String>,
+    pub class: Option<String>,
+    pub window_role: Option<String>,
+    pub transient_for: Option<u64>,
+    pub window_type: Option<String>,
 }
 
 impl<'de> serde::Deserialize<'de> for WindowProperties {
@@ -138,6 +141,10 @@ impl<'de> serde::Deserialize<'de> for WindowProperties {
             .0
             .get_mut(&WindowProperty::TransientFor)
             .and_then(|x| x.take().map(|x| x.unwrap_num()));
+        let window_type = input
+            .0
+            .get_mut(&WindowProperty::WindowType)
+            .and_then(|x| x.take().map(|x| x.unwrap_str()));
 
         Ok(WindowProperties {
             title,
@@ -145,6 +152,7 @@ impl<'de> serde::Deserialize<'de> for WindowProperties {
             class,
             window_role,
             transient_for,
+            window_type,
         })
     }
 }
@@ -174,6 +182,7 @@ pub enum WindowProperty {
     Class,
     WindowRole,
     TransientFor,
+    WindowType,
 }
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Copy, Hash, Debug)]
@@ -217,6 +226,7 @@ pub enum NodeBorder {
     Normal,
     None,
     Pixel,
+    CSD,
 }
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone, Copy)]
@@ -228,6 +238,7 @@ pub enum NodeLayout {
     Tabbed,
     Dockarea,
     Output,
+    None,
 }
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone, Copy)]

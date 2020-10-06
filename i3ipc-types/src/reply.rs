@@ -364,7 +364,6 @@ mod tests {
     fn test_other_tree() {
         let output = include_str!("../test/other_tree.json");
         let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
-        dbg!(&o);
         assert!(o.is_ok());
     }
 

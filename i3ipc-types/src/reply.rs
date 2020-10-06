@@ -22,7 +22,8 @@ pub struct Workspace {
     pub name: String,
     pub visible: bool,
     pub focused: bool,
-    pub focus: Vec<usize>,
+    // used in sway, TODO: put behind feature flag
+    pub focus: Option<Vec<usize>>,
     pub urgent: bool,
     pub rect: Rect,
     pub output: String,
@@ -70,6 +71,7 @@ pub struct Node {
     pub floating_nodes: Vec<Node>,
     pub fullscreen_mode: FullscreenMode,
     pub nodes: Vec<Node>,
+    // used in sway, TODO: put behind feature flag
     pub app_id: Option<String>,
 }
 
@@ -339,6 +341,7 @@ mod tests {
     fn test_workspace() {
         let output = "{\"id\":1,\"num\":2,\"name\":\"2\",\"visible\":false,\"focused\":false,\"rect\":{\"x\":2560,\"y\":29,\"width\":2560,\"height\":1571},\"output\":\"DVI-I-3\",\"urgent\":false}";
         let o: Result<Workspace, serde_json::error::Error> = serde_json::from_str(output);
+        dbg!(&o);
         assert!(o.is_ok());
     }
 
@@ -346,6 +349,7 @@ mod tests {
     fn test_workspace_no_id() {
         let output = "{\"num\":2,\"name\":\"2\",\"visible\":false,\"focused\":false,\"rect\":{\"x\":2560,\"y\":29,\"width\":2560,\"height\":1571},\"output\":\"DVI-I-3\",\"urgent\":false}";
         let o: Result<Workspace, serde_json::error::Error> = serde_json::from_str(output);
+        dbg!(&o);
         assert!(o.is_ok());
         assert_eq!(o.unwrap().id, 0);
     }

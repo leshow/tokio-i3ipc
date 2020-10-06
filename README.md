@@ -1,4 +1,6 @@
-# tokio-i3ipc
+# i3ipc
+
+## tokio-i3ipc
 
 [![Build Status](https://travis-ci.com/leshow/tokio-i3ipc.svg?branch=master)](https://travis-ci.com/leshow/tokio-i3ipc?branch=master)
 [![Crate](https://img.shields.io/crates/v/tokio-i3ipc.svg)](https://crates.io/crates/tokio-i3ipc)
@@ -6,11 +8,29 @@
 
 This crate provides types and functions for working with i3's IPC protocol within tokio. It re-exports the subcrate `i3ipc-types` because it is also used for a synchronous version of the code.
 
+see [here](https://github.com/leshow/tokio-i3ipc/tree/master/tokio-i3ipc) for tokio specific i3 ipc
+
+## async-i3ipc
+
+[![Crate](https://img.shields.io/crates/v/async-i3ipc.svg)](https://crates.io/crates/async-i3ipc)
+[![API](https://docs.rs/async-i3ipc/badge.svg)](https://docs.rs/async-i3ipc)
+
+see [here](https://github.com/leshow/tokio-i3ipc/tree/master/async-i3ipc) for async-std specific i3 ipc
+
+## std synchronous IO i3ipc
+
+[![Crate](https://img.shields.io/crates/v/i3_ipc.svg)](https://crates.io/crates/i3_ipc)
+[![API](https://docs.rs/i3_ipc/badge.svg)](https://docs.rs/i3_ipc)
+
+see [here](https://github.com/leshow/tokio-i3ipc/tree/master/i3-ipc) for synchronous specific i3 ipc
+
+### Using tokio-i3ipc
+
 I expect the most common use case will be to subscribe to some events and listen:
 
 ```rust
-use futures::stream::StreamExt;
 use std::io;
+use tokio::stream::StreamExt;
 use tokio_i3ipc::{
     event::{Event, Subscribe},
     I3,
@@ -39,61 +59,6 @@ async fn main() -> io::Result<()> {
 }
 ```
 
-Another example, getting all workspaces from i3:
+### Contributing
 
-```rust
-use std::io;
-use tokio_i3ipc::{reply, I3};
-
-#[tokio::main(basic_scheduler)]
-async fn main() -> io::Result<()> {
-    let mut i3 = I3::connect().await?;
-    // this type can be inferred, here is written explicitly:
-    let worksp: reply::Workspaces = i3.get_workspaces().await?;
-    println!("{:#?}", worksp);
-
-    Ok(())
-}
-```
-
-or, you could write any `get_*` yourself using the same methods it does:
-
-```rust
-use std::io;
-use tokio_i3ipc::{msg, reply, MsgResponse, I3};
-
-#[tokio::main(basic_scheduler)]
-async fn main() -> io::Result<()> {
-    let mut i3 = I3::connect().await?;
-    // send msg RunCommand with a payload
-    let payload = "some_command";
-    i3.send_msg_body(msg::Msg::RunCommand, payload).await?;
-    let resp: MsgResponse<Vec<reply::Success>> = i3.read_msg().await?;
-    Ok(())
-}
-```
-
-`send_msg`, will handle writing to i3. `read_msg` and will handle reading.
-
-## Sending Messages to i3
-
-To [send messages](https://i3wm.org/docs/ipc.html#_sending_messages_to_i3) to i3, there are a number of convenience methods on `I3`.
-
-```rust
-use std::io;
-use tokio_i3ipc::{reply, I3};
-
-#[tokio::main(basic_scheduler)]
-async fn main() -> io::Result<()> {
-    let mut i3 = I3::connect().await?;
-    // this type can be inferred, here is written explicitly:
-    let outputs = i3.get_outputs().await?;
-    println!("{:#?}", worksp);
-
-    Ok(())
-}
-```
-
-### "Real world" example
-
-I have a fork of an i3 window-logging application that uses `tokio-i3ipc` (https://github.com/leshow/i3-tracker-rs/). The tracker subscribes to window events and logs how much time is spent on each node.
+Contributions PRs, issues, comments, are all welcome!

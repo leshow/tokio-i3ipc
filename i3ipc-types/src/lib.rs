@@ -2,13 +2,13 @@
 //! Also contained is protocol level communication using `io::Read` and `Write`
 use serde::{de::DeserializeOwned, Serialize};
 
-use std::{env, io, process::Command};
+use std::{env, io, os::unix::net::UnixStream as SyncUnixStream, process::Command};
 
-#[cfg(all(feature = "async-traits", not(feature = "async-std-traits")))]
-use tokio::io::{AsyncRead, AsyncWrite};
+#[cfg(feature = "async-traits")]
+use tokio::net::UnixStream as TokioUnixStream;
 
-#[cfg(all(feature = "async-std-traits", not(feature = "async-traits")))]
-use async_std::io::{Read as AsyncStdRead, Write as AsyncStdWrite};
+#[cfg(feature = "async-std-traits")]
+use async_std::os::unix::net::UnixStream as AsyncStdUnixStream;
 
 pub mod event;
 pub mod msg;
@@ -92,18 +92,16 @@ pub trait I3IPC: io::Read + io::Write + I3Protocol {
     }
 }
 
-#[cfg(all(feature = "async-traits", not(feature = "async-std-traits")))]
-impl<T: AsyncRead + AsyncWrite> I3Protocol for T {}
+#[cfg(feature = "async-traits")]
+impl I3Protocol for TokioUnixStream {}
 
-#[cfg(all(feature = "async-std-traits", not(feature = "async-traits")))]
-impl<T: AsyncStdRead + AsyncStdWrite> I3Protocol for T {}
+#[cfg(feature = "async-std-traits")]
+impl I3Protocol for AsyncStdUnixStream {}
 
-// Any type which brings `I3IPC` into scope and implements Read and Write gets
-// the protocol implemented for free
-impl<T: io::Read + io::Write + I3Protocol> I3IPC for T {}
+/// implement I3IPC for std UnixStream
+impl I3IPC for SyncUnixStream {}
 
-#[cfg(all(not(feature = "async-traits"), not(feature = "async-std-traits")))]
-impl<T: io::Read + io::Write> I3Protocol for T {}
+impl I3Protocol for SyncUnixStream {}
 
 // #[cfg(not(feature = "async-traits"))]
 /// Instead of returning an enum, we're returning a struct containing the `Msg`

@@ -1,6 +1,6 @@
 [package]
 name = "i3_ipc"
-version = "0.10.0"
+version = "0.11.0"
 authors = ["Evan Cameron <cameron.evan@gmail.com>"]
 edition = "2018"
 description = """
@@ -13,7 +13,7 @@ keywords = ["i3", "ipc", "protocol", "json", "serde"]
 repository = "https://github.com/leshow/tokio-i3ipc/tree/master/i3-ipc"
 
 [dependencies]
-i3ipc-types = { version = "0.10", path = "../i3ipc-types" }
+i3ipc-types = { version = "0.11", path = "../i3ipc-types" }
 serde = "1.0"
 serde_json = "1.0"
 

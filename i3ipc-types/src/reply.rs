@@ -1,5 +1,5 @@
 //! Contains structs for deserializing messages from i3
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use std::collections::HashMap;
@@ -16,11 +16,13 @@ pub type Workspaces = Vec<Workspace>;
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
 pub struct Workspace {
+    #[serde(default)]
     pub id: usize,
     pub num: usize,
     pub name: String,
     pub visible: bool,
     pub focused: bool,
+    pub focus: Vec<usize>,
     pub urgent: bool,
     pub rect: Rect,
     pub output: String,
@@ -43,6 +45,7 @@ pub struct Output {
 pub struct Node {
     pub id: usize,
     pub name: Option<String>,
+    pub num: Option<i32>,
     #[serde(rename = "type")]
     pub node_type: NodeType,
     pub layout: NodeLayout,
@@ -67,6 +70,7 @@ pub struct Node {
     pub floating_nodes: Vec<Node>,
     pub fullscreen_mode: FullscreenMode,
     pub nodes: Vec<Node>,
+    pub app_id: Option<String>,
 }
 
 impl PartialEq for Node {
@@ -79,11 +83,12 @@ impl Eq for Node {}
 
 #[derive(Eq, Serialize, PartialEq, Clone, Debug)]
 pub struct WindowProperties {
-    title: Option<String>,
-    instance: Option<String>,
-    class: Option<String>,
-    window_role: Option<String>,
-    transient_for: Option<u64>,
+    pub title: Option<String>,
+    pub instance: Option<String>,
+    pub class: Option<String>,
+    pub window_role: Option<String>,
+    pub transient_for: Option<u64>,
+    pub window_type: Option<String>,
 }
 
 impl<'de> serde::Deserialize<'de> for WindowProperties {
@@ -136,6 +141,10 @@ impl<'de> serde::Deserialize<'de> for WindowProperties {
             .0
             .get_mut(&WindowProperty::TransientFor)
             .and_then(|x| x.take().map(|x| x.unwrap_num()));
+        let window_type = input
+            .0
+            .get_mut(&WindowProperty::WindowType)
+            .and_then(|x| x.take().map(|x| x.unwrap_str()));
 
         Ok(WindowProperties {
             title,
@@ -143,6 +152,7 @@ impl<'de> serde::Deserialize<'de> for WindowProperties {
             class,
             window_role,
             transient_for,
+            window_type,
         })
     }
 }
@@ -172,6 +182,7 @@ pub enum WindowProperty {
     Class,
     WindowRole,
     TransientFor,
+    WindowType,
 }
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Copy, Hash, Debug)]
@@ -215,6 +226,7 @@ pub enum NodeBorder {
     Normal,
     None,
     Pixel,
+    CSD,
 }
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone, Copy)]
@@ -226,6 +238,7 @@ pub enum NodeLayout {
     Tabbed,
     Dockarea,
     Output,
+    None,
 }
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone, Copy)]
@@ -328,43 +341,53 @@ mod tests {
         let o: Result<Workspace, serde_json::error::Error> = serde_json::from_str(output);
         assert!(o.is_ok());
     }
+
+    #[test]
+    fn test_workspace_no_id() {
+        let output = "{\"num\":2,\"name\":\"2\",\"visible\":false,\"focused\":false,\"rect\":{\"x\":2560,\"y\":29,\"width\":2560,\"height\":1571},\"output\":\"DVI-I-3\",\"urgent\":false}";
+        let o: Result<Workspace, serde_json::error::Error> = serde_json::from_str(output);
+        assert!(o.is_ok());
+        assert_eq!(o.unwrap().id, 0);
+    }
+
     #[test]
     fn test_binding_modes() {
         let output = "[\"resize\",\"default\"]";
         let o: Result<BindingModes, serde_json::error::Error> = serde_json::from_str(output);
         assert!(o.is_ok());
     }
+
     #[test]
     fn test_config() {
         let output = "{\"config\": \"some config data here\"}";
         let o: Result<Config, serde_json::error::Error> = serde_json::from_str(output);
         assert!(o.is_ok());
     }
+
     #[test]
     fn test_tree() {
-        use std::fs;
-        let output = fs::read_to_string("./test/tree.json").unwrap();
+        let output = include_str!("../test/tree.json");
         let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
         assert!(o.is_ok());
     }
+
     #[test]
     fn test_other_tree() {
-        use std::fs;
-        let output = fs::read_to_string("./test/other_tree.json").unwrap();
+        let output = include_str!("../test/other_tree.json");
         let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
         assert!(o.is_ok());
     }
+
     #[test]
     fn test_last_tree() {
-        use std::fs;
-        let output = fs::read_to_string("./test/last_tree.json").unwrap();
+        let output = include_str!("../test/last_tree.json");
         let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
         assert!(o.is_ok());
     }
+
     #[test]
     fn test_version() {
-        use std::fs;
-        let output = fs::read_to_string("./test/version.json").unwrap();
+        let output = include_str!("../test/version.json");
         let o: Result<Version, serde_json::error::Error> = serde_json::from_str(&output);
         assert!(o.is_ok());
     }

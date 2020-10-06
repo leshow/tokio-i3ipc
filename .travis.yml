@@ -29,7 +29,7 @@ script:
   - cargo clippy --all --tests --examples -- --deny clippy::all;
 
   - >
-    for dir in . i3ipc-types i3-ipc async-i3ipc; do
+    for dir in . tokio-i3ipc i3ipc-types i3-ipc async-i3ipc; do
       cargo test --manifest-path $dir/Cargo.toml -- --nocapture;
     done
 

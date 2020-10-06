@@ -83,12 +83,12 @@ impl Eq for Node {}
 
 #[derive(Eq, Serialize, PartialEq, Clone, Debug)]
 pub struct WindowProperties {
-    title: Option<String>,
-    instance: Option<String>,
-    class: Option<String>,
-    window_role: Option<String>,
-    transient_for: Option<u64>,
-    window_type: Option<String>,
+    pub title: Option<String>,
+    pub instance: Option<String>,
+    pub class: Option<String>,
+    pub window_role: Option<String>,
+    pub transient_for: Option<u64>,
+    pub window_type: Option<String>,
 }
 
 impl<'de> serde::Deserialize<'de> for WindowProperties {

@@ -58,6 +58,9 @@ pub struct I3;
 #[derive(Debug)]
 pub struct I3Stream(UnixStream);
 
+impl I3IPC for I3Stream {}
+impl I3Protocol for I3Stream {}
+
 /// Provides the `connect` method for `I3`
 impl Connect for I3 {
     type Stream = I3Stream;

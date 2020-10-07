@@ -73,7 +73,7 @@ pub struct Node {
     pub fullscreen_mode: FullscreenMode,
     pub nodes: Vec<Node>,
     #[cfg(feature = "sway")]
-    pub app_id: String,
+    pub app_id: Option<String>,
 }
 
 impl PartialEq for Node {

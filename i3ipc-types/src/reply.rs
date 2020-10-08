@@ -206,10 +206,10 @@ pub enum WindowType {
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
 pub struct Rect {
-    pub x: usize,
-    pub y: usize,
-    pub width: usize,
-    pub height: usize,
+    pub x: i64,
+    pub y: i64,
+    pub width: i64,
+    pub height: i64,
 }
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug, Copy)]

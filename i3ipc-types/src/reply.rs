@@ -23,10 +23,11 @@ pub struct Workspace {
     pub visible: bool,
     pub focused: bool,
     // used in sway, TODO: put behind feature flag
-    pub focus: Option<Vec<usize>>,
     pub urgent: bool,
     pub rect: Rect,
     pub output: String,
+    #[cfg(feature = "sway")]
+    pub focus: Vec<usize>,
 }
 
 /// Outputs reply
@@ -71,7 +72,7 @@ pub struct Node {
     pub floating_nodes: Vec<Node>,
     pub fullscreen_mode: FullscreenMode,
     pub nodes: Vec<Node>,
-    // used in sway, TODO: put behind feature flag
+    #[cfg(feature = "sway")]
     pub app_id: Option<String>,
 }
 
@@ -90,6 +91,7 @@ pub struct WindowProperties {
     pub class: Option<String>,
     pub window_role: Option<String>,
     pub transient_for: Option<u64>,
+    #[cfg(feature = "sway")]
     pub window_type: Option<String>,
 }
 
@@ -143,6 +145,7 @@ impl<'de> serde::Deserialize<'de> for WindowProperties {
             .0
             .get_mut(&WindowProperty::TransientFor)
             .and_then(|x| x.take().map(|x| x.unwrap_num()));
+        #[cfg(feature = "sway")]
         let window_type = input
             .0
             .get_mut(&WindowProperty::WindowType)
@@ -154,6 +157,7 @@ impl<'de> serde::Deserialize<'de> for WindowProperties {
             class,
             window_role,
             transient_for,
+            #[cfg(feature = "sway")]
             window_type,
         })
     }
@@ -184,6 +188,7 @@ pub enum WindowProperty {
     Class,
     WindowRole,
     TransientFor,
+    #[cfg(feature = "sway")]
     WindowType,
 }
 
@@ -228,6 +233,7 @@ pub enum NodeBorder {
     Normal,
     None,
     Pixel,
+    #[cfg(feature = "sway")]
     CSD,
 }
 
@@ -240,6 +246,7 @@ pub enum NodeLayout {
     Tabbed,
     Dockarea,
     Output,
+    #[cfg(feature = "sway")]
     None,
 }
 

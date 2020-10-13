@@ -22,6 +22,10 @@ i3ipc-types = { version = "0.11", path = "../i3ipc-types", features = ["async-tr
 tokio-util = { version = "0.3", features = ["codec"] }
 tokio = { version = "0.2", features = ["io-std", "io-util", "net", "macros", "stream"] }
 
+[features]
+default = []
+sway = ["i3ipc-types/sway"]
+
 [dev-dependencies]
 version-sync = "0.9"
 

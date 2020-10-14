@@ -209,6 +209,16 @@ pub enum WindowType {
     Unknown,
 }
 
+#[cfg(feature = "sway")]
+#[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
+pub struct Rect {
+    pub x: isize,
+    pub y: isize,
+    pub width: isize,
+    pub height: isize,
+}
+
+#[cfg(not(feature = "sway"))]
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
 pub struct Rect {
     pub x: usize,

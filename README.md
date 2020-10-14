@@ -6,23 +6,23 @@
 [![Crate](https://img.shields.io/crates/v/tokio-i3ipc.svg)](https://crates.io/crates/tokio-i3ipc)
 [![API](https://docs.rs/tokio-i3ipc/badge.svg)](https://docs.rs/tokio-i3ipc)
 
-This crate provides types and functions for working with i3's IPC protocol within tokio. It re-exports the subcrate `i3ipc-types` because it is also used for a synchronous version of the code.
+This crate provides types and functions for working with i3's IPC protocol (and some basic sway support) within tokio. It re-exports the subcrate `i3ipc-types` because it is also used for a synchronous version of the code.
 
-see [here](https://github.com/leshow/tokio-i3ipc/tree/master/tokio-i3ipc) for tokio specific i3 ipc
+see [here](https://github.com/leshow/tokio-i3ipc/tree/master/tokio-i3ipc) for tokio runtime specific i3
 
 ## async-i3ipc
 
 [![Crate](https://img.shields.io/crates/v/async-i3ipc.svg)](https://crates.io/crates/async-i3ipc)
 [![API](https://docs.rs/async-i3ipc/badge.svg)](https://docs.rs/async-i3ipc)
 
-see [here](https://github.com/leshow/tokio-i3ipc/tree/master/async-i3ipc) for async-std specific i3 ipc
+see [here](https://github.com/leshow/tokio-i3ipc/tree/master/async-i3ipc) for async-std specific i3 ipc (and sway-- not all fields supported)
 
 ## std synchronous IO i3ipc
 
 [![Crate](https://img.shields.io/crates/v/i3_ipc.svg)](https://crates.io/crates/i3_ipc)
 [![API](https://docs.rs/i3_ipc/badge.svg)](https://docs.rs/i3_ipc)
 
-see [here](https://github.com/leshow/tokio-i3ipc/tree/master/i3-ipc) for synchronous specific i3 ipc
+see [here](https://github.com/leshow/tokio-i3ipc/tree/master/i3-ipc) for synchronous specific i3 ipc (and sway-- not all fields supported)
 
 ### Using tokio-i3ipc
 

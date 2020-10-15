@@ -42,4 +42,4 @@ name = "single_thread"
 path = "examples/single_thread.rs"
 
 [badges]
-travis-ci = { repository = "leshow/tokio-i3ipc", branch = "master", service = "github" }
+github-actions = { repository = "leshow/tokio-i3ipc", workflow = "actions" }

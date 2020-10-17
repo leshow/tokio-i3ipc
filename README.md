@@ -2,7 +2,7 @@
 
 ## tokio-i3ipc
 
-![Build Status](https://github.com/leshow/tokio-i3ipc/workflows/.github/workflows/actions.yml/badge.svg)
+[![Build Status](https://github.com/leshow/tokio-i3ipc/workflows/.github/workflows/actions.yml/badge.svg)]
 [![Crate](https://img.shields.io/crates/v/tokio-i3ipc.svg)](https://crates.io/crates/tokio-i3ipc)
 [![API](https://docs.rs/tokio-i3ipc/badge.svg)](https://docs.rs/tokio-i3ipc)
 

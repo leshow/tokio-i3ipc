@@ -15,12 +15,13 @@ keywords = ["i3", "ipc", "tokio", "async", "protocol"]
 repository = "https://github.com/leshow/tokio-i3ipc"
 
 [dependencies]
-bytes = "0.5"
+bytes = "1.0"
 serde = "1.0"
 serde_json = "1.0"
 i3ipc-types = { version = "0.11", path = "../i3ipc-types", features = ["async-traits"] }
-tokio-util = { version = "0.3", features = ["codec"] }
-tokio = { version = "0.2", features = ["io-std", "io-util", "net", "macros", "stream"] }
+tokio-util = { version = "0.6", features = ["codec"] }
+tokio = { version = "1.0", features = ["io-util", "macros", "rt-multi-thread"] }
+tokio-stream = { version = "0.1" }
 
 [features]
 default = []

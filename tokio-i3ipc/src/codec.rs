@@ -4,11 +4,11 @@
 //! from i3:
 //!
 //! ```no_run
-//! # use tokio::stream::StreamExt;
+//! # use tokio_stream::StreamExt;
 //! # use std::io;
 //! use tokio_i3ipc::{event::Subscribe, I3};
 //!
-//! #[tokio::main(basic_scheduler)]
+//! #[tokio::main]
 //! async fn main() -> io::Result<()> {
 //!     let mut i3 = I3::connect().await?;
 //!     i3.subscribe([Subscribe::Window]).await?;

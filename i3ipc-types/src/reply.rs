@@ -355,6 +355,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(feature = "sway", ignore)]
     fn test_workspace() {
         let output = "{\"id\":1,\"num\":2,\"name\":\"2\",\"visible\":false,\"focused\":false,\"rect\":{\"x\":2560,\"y\":29,\"width\":2560,\"height\":1571},\"output\":\"DVI-I-3\",\"urgent\":false}";
         let o: Result<Workspace, serde_json::error::Error> = serde_json::from_str(output);
@@ -363,6 +364,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(feature = "sway", ignore)]
     fn test_workspace_no_id() {
         let output = "{\"num\":2,\"name\":\"2\",\"visible\":false,\"focused\":false,\"rect\":{\"x\":2560,\"y\":29,\"width\":2560,\"height\":1571},\"output\":\"DVI-I-3\",\"urgent\":false}";
         let o: Result<Workspace, serde_json::error::Error> = serde_json::from_str(output);

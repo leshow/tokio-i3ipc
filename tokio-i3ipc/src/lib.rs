@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/tokio-i3ipc/0.12.0")]
+#![doc(html_root_url = "https://docs.rs/tokio-i3ipc/0.12.1")]
 //! # tokio-i3ipc
 //!
 //! This crate provides types and functions for working with i3's IPC protocol

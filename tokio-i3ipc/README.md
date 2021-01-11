@@ -18,7 +18,7 @@ use tokio_i3ipc::{
     I3,
 };
 
-#[tokio::main(basic_scheduler)]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> io::Result<()> {
     let mut i3 = I3::connect().await?;
     let resp = i3.subscribe([Subscribe::Window]).await?;
@@ -47,7 +47,7 @@ Another example, getting all workspaces from i3:
 use std::io;
 use tokio_i3ipc::{reply, I3};
 
-#[tokio::main(basic_scheduler)]
+#[tokio::main(flavor = "current_thread")]]
 async fn main() -> io::Result<()> {
     let mut i3 = I3::connect().await?;
     // this type can be inferred, here is written explicitly:
@@ -64,7 +64,7 @@ or, you could write any `get_*` yourself using the same methods it does:
 use std::io;
 use tokio_i3ipc::{msg, reply, MsgResponse, I3};
 
-#[tokio::main(basic_scheduler)]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> io::Result<()> {
     let mut i3 = I3::connect().await?;
     // send msg RunCommand with a payload
@@ -85,7 +85,7 @@ To [send messages](https://i3wm.org/docs/ipc.html#_sending_messages_to_i3) to i3
 use std::io;
 use tokio_i3ipc::{reply, I3};
 
-#[tokio::main(basic_scheduler)]
+#[tokio::main(flavor = "current_thread")]]
 async fn main() -> io::Result<()> {
     let mut i3 = I3::connect().await?;
     // this type can be inferred, here is written explicitly:

@@ -25,10 +25,10 @@ async-std-traits = ["async-std"]
 sway = []
 
 [dependencies.tokio]
-version = "0.2"
-features = ["io-std"]
+version = "1.0"
+features = ["net"]
 optional = true
 
 [dependencies.async-std]
-version = "1.6"
+version = "1.8"
 optional = true

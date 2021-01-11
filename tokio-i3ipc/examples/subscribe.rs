@@ -1,5 +1,5 @@
 use std::io;
-use tokio::stream::StreamExt;
+use tokio_stream::StreamExt;
 
 use tokio_i3ipc::{
     event::{Event, Subscribe},
@@ -7,7 +7,7 @@ use tokio_i3ipc::{
 };
 
 // This will spawn the default scheduler which spawns 1 thread per core
-// You can use #[tokio::main(basic_scheduler)] to use a single thread (you don't
+// You can use #[tokio::main(flavor = "current_thread")] to use a single thread (you don't
 // need anything more)
 #[tokio::main]
 async fn main() -> io::Result<()> {

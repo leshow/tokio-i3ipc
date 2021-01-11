@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/tokio-i3ipc/0.11.0")]
+#![doc(html_root_url = "https://docs.rs/tokio-i3ipc/0.12.0")]
 //! # tokio-i3ipc
 //!
 //! This crate provides types and functions for working with i3's IPC protocol
@@ -17,7 +17,7 @@
 //! # use std::io;
 //! use tokio_i3ipc::{event::{Event,Subscribe}, I3};
 //!
-//! #[tokio::main]
+//! #[tokio::main(flavor = "current_thread")]
 //! async fn main() -> io::Result<()> {
 //!     let mut i3 = I3::connect().await?;
 //!     i3.subscribe([Subscribe::Window]).await?;
@@ -49,7 +49,7 @@
 //!
 //! use tokio_i3ipc::{reply, I3};
 //!
-//! #[tokio::main]
+//! #[tokio::main(flavor = "current_thread")]
 //! async fn main() -> io::Result<()> {
 //!     let mut i3 = I3::connect().await?;
 //!     // this type can be inferred, here is written explicitly:
@@ -66,7 +66,7 @@
 //! # use std::io;
 //! use tokio_i3ipc::{msg, reply, MsgResponse, I3};
 //!
-//! #[tokio::main]
+//! #[tokio::main(flavor = "current_thread")]
 //! # async fn main() -> io::Result<()> {
 //! let mut i3 = I3::connect().await?;
 //! // send msg RunCommand with a payload

@@ -1,5 +1,7 @@
 # tokio-i3ipc
 
+**Now with tokio 1.0 support!** Use version 0.12.0 and up for tokio 1.0
+
 ![Build Status](https://github.com/leshow/tokio-i3ipc/workflows/.github/workflows/actions.yml/badge.svg)
 [![Crate](https://img.shields.io/crates/v/tokio-i3ipc.svg)](https://crates.io/crates/tokio-i3ipc)
 [![API](https://docs.rs/tokio-i3ipc/badge.svg)](https://docs.rs/tokio-i3ipc)

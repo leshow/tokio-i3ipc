@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/async-i3ipc/0.2.0")]
+#![doc(html_root_url = "https://docs.rs/async-i3ipc/0.3.0")]
 //! # async-i3ipc
 //!
 //! This crate provides types and functions for working with i3's IPC protocol

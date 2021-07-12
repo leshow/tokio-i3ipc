@@ -54,6 +54,7 @@ pub struct Node {
     pub output: Option<String>,
     pub orientation: NodeOrientation,
     pub border: NodeBorder,
+    pub scratchpad_state: ScratchpadState,
     pub percent: Option<f64>,
     pub rect: Rect,
     pub window_rect: Rect,
@@ -266,6 +267,14 @@ pub enum NodeOrientation {
     Horizontal,
     Vertical,
     None,
+}
+
+#[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone, Copy)]
+#[serde(rename_all = "lowercase")]
+pub enum ScratchpadState {
+    None,
+    Fresh,
+    Changed,
 }
 
 /// Marks Reply

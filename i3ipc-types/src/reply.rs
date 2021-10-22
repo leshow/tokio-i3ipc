@@ -92,6 +92,7 @@ pub struct WindowProperties {
     pub class: Option<String>,
     pub window_role: Option<String>,
     pub transient_for: Option<u64>,
+    pub machine: Option<String>,
     #[cfg(feature = "sway")]
     pub window_type: Option<String>,
 }

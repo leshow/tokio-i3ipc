@@ -406,28 +406,28 @@ mod tests {
     #[test]
     fn test_tree() {
         let output = include_str!("../test/tree.json");
-        let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
+        let o: Result<Node, serde_json::error::Error> = serde_json::from_str(output);
         assert!(o.is_ok());
     }
 
     #[test]
     fn test_other_tree() {
         let output = include_str!("../test/other_tree.json");
-        let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
+        let o: Result<Node, serde_json::error::Error> = serde_json::from_str(output);
         assert!(o.is_ok());
     }
 
     #[test]
     fn test_last_tree() {
         let output = include_str!("../test/last_tree.json");
-        let o: Result<Node, serde_json::error::Error> = serde_json::from_str(&output);
+        let o: Result<Node, serde_json::error::Error> = serde_json::from_str(output);
         assert!(o.is_ok());
     }
 
     #[test]
     fn test_version() {
         let output = include_str!("../test/version.json");
-        let o: Result<Version, serde_json::error::Error> = serde_json::from_str(&output);
+        let o: Result<Version, serde_json::error::Error> = serde_json::from_str(output);
         assert!(o.is_ok());
     }
 }

@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/async-i3ipc/0.3.0")]
+#![doc(html_root_url = "https://docs.rs/async-i3ipc/0.4.0")]
 //! # async-i3ipc
 //!
 //! This crate provides types and functions for working with i3's IPC protocol
@@ -111,9 +111,7 @@ impl I3 {
         let mut init = [0_u8; 14];
         let _len = self.stream.read_exact(&mut init).await?;
 
-        if &init[0..6] != MAGIC.as_bytes() {
-            panic!("Magic str not received");
-        }
+        assert!(!(&init[0..6] != MAGIC.as_bytes()), "Magic str not received");
         let payload_len = u32::from_ne_bytes([init[6], init[7], init[8], init[9]]) as usize;
         let msg_type = u32::from_ne_bytes([init[10], init[11], init[12], init[13]]);
 

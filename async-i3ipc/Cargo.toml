@@ -2,7 +2,7 @@
 name = "async-i3ipc"
 version = "0.4.0"
 authors = ["Evan Cameron <cameron.evan@gmail.com>"]
-edition = "2018"
+edition = "2021"
 description = """
 Bindings for i3 and async-std allowing async applications to communicate with i3 over
 it's IPC interface. Contains futures implementations and convenience functions

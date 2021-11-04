@@ -6,7 +6,7 @@ description = """
 Library containing all the types needed to communicate with i3, along with their serde implementations 
 and implementations of many std traits
 """
-edition = "2018"
+edition = "2021"
 license = "MIT"
 readme = "README.md"
 keywords = ["i3", "ipc", "protocol", "json", "serde"]

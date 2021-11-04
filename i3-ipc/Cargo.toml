@@ -2,7 +2,7 @@
 name = "i3_ipc"
 version = "0.13.0"
 authors = ["Evan Cameron <cameron.evan@gmail.com>"]
-edition = "2018"
+edition = "2021"
 description = """
 For communicating with i3 over it's IPC interface synchronously
 """

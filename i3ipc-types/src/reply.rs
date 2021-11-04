@@ -92,6 +92,7 @@ pub struct WindowProperties {
     pub class: Option<String>,
     pub window_role: Option<String>,
     pub transient_for: Option<u64>,
+    pub machine: Option<String>,
     #[cfg(feature = "sway")]
     pub window_type: Option<String>,
 }
@@ -146,6 +147,10 @@ impl<'de> serde::Deserialize<'de> for WindowProperties {
             .0
             .get_mut(&WindowProperty::TransientFor)
             .and_then(|x| x.take().map(|x| x.unwrap_num()));
+        let machine = input
+            .0
+            .get_mut(&WindowProperty::Machine)
+            .and_then(|x| x.take().map(|x| x.unwrap_str()));
         #[cfg(feature = "sway")]
         let window_type = input
             .0
@@ -158,6 +163,7 @@ impl<'de> serde::Deserialize<'de> for WindowProperties {
             class,
             window_role,
             transient_for,
+            machine,
             #[cfg(feature = "sway")]
             window_type,
         })
@@ -189,6 +195,7 @@ pub enum WindowProperty {
     Class,
     WindowRole,
     TransientFor,
+    Machine,
     #[cfg(feature = "sway")]
     WindowType,
 }

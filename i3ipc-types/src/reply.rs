@@ -18,7 +18,7 @@ pub type Workspaces = Vec<Workspace>;
 pub struct Workspace {
     #[serde(default)]
     pub id: usize,
-    pub num: usize,
+    pub num: i32,
     pub name: String,
     pub visible: bool,
     pub focused: bool,

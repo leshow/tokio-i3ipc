@@ -18,7 +18,7 @@ repository = "https://github.com/leshow/tokio-i3ipc"
 bytes = "1.0"
 serde = "1.0"
 serde_json = "1.0"
-i3ipc-types = { path = "../i3ipc-types", features = ["async-traits"] }
+i3ipc-types = { version = "0.14.0", path = "../i3ipc-types", features = ["async-traits"] }
 tokio-util = { version = "0.6", features = ["codec"] }
 tokio = { version = "1.0", features = ["io-util", "macros", "rt-multi-thread"] }
 tokio-stream = { version = "0.1" }

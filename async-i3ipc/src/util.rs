@@ -13,7 +13,7 @@ where
 {
     let mut buf = [0; 14];
     stream.read_exact(&mut buf).await?;
-    assert!(!(&buf[0..6] != MAGIC.as_bytes()), "Magic str not received");
+    assert!(&buf[0..6] == MAGIC.as_bytes(), "Magic str not received");
     let payload_len = u32::from_ne_bytes([buf[6], buf[7], buf[8], buf[9]]) as usize;
     let msg_type = u32::from_ne_bytes([buf[10], buf[11], buf[12], buf[13]]);
 

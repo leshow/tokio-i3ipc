@@ -229,8 +229,8 @@ pub struct Rect {
 #[cfg(not(feature = "sway"))]
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
 pub struct Rect {
-    pub x: usize,
-    pub y: usize,
+    pub x: isize,
+    pub y: isize,
     pub width: usize,
     pub height: usize,
 }

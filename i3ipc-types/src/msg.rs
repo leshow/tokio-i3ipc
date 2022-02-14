@@ -13,6 +13,7 @@ pub enum Msg {
     Config,
     Tick,
     Sync,
+    BindingState,
 }
 
 impl From<u32> for Msg {
@@ -30,6 +31,7 @@ impl From<u32> for Msg {
             9 => Msg::Config,
             10 => Msg::Tick,
             11 => Msg::Sync,
+            12 => Msg::BindingState,
             _ => panic!("Unknown message type found"),
         }
     }
@@ -50,6 +52,7 @@ impl From<Msg> for u32 {
             Msg::Config => 9,
             Msg::Tick => 10,
             Msg::Sync => 11,
+            Msg::BindingState => 12,
         }
     }
 }

@@ -274,4 +274,11 @@ impl I3 {
         self.send_msg(msg::Msg::Sync).await?;
         Ok(self.read_msg().await?.body)
     }
+
+    /// Future to get [BindingState](../reply/struct.BindingState.html), sends
+    /// [BindingState](../msg/enum.Msg.html#variant.BindingState)
+    pub async fn get_binding_state(&mut self) -> io::Result<reply::BindingState> {
+        self.send_msg(msg::Msg::BindingState).await?;
+        Ok(self.read_msg().await?.body)
+    }
 }

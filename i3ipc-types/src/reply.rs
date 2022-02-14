@@ -352,6 +352,12 @@ pub struct Config {
     pub config: String,
 }
 
+/// Binding State Reply
+#[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone)]
+pub struct BindingState {
+    pub name: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

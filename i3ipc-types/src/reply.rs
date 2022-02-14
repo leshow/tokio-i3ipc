@@ -410,6 +410,13 @@ mod tests {
     }
 
     #[test]
+    fn test_binding_state() {
+        let output = r#"{"name": "default"}"#;
+        let o: Result<BindingState, serde_json::error::Error> = serde_json::from_str(output);
+        assert!(o.is_ok());
+    }
+
+    #[test]
     fn test_tree() {
         let output = include_str!("../test/tree.json");
         let o: Result<Node, serde_json::error::Error> = serde_json::from_str(output);

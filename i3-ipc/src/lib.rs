@@ -222,6 +222,13 @@ impl I3Stream {
         self.write_all(&buf[..])?;
         Ok(self.receive_msg()?.body)
     }
+
+    /// Get i3 binding state
+    pub fn get_binding_state(&mut self) -> io::Result<reply::BindingState> {
+        let buf = self.encode_msg(msg::Msg::BindingState);
+        self.write_all(&buf[..])?;
+        Ok(self.receive_msg()?.body)
+    }
 }
 
 impl Read for I3Stream {

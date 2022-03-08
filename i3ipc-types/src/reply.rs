@@ -425,7 +425,7 @@ mod tests {
         let o: Result<Config, serde_json::error::Error> = serde_json::from_str(output);
         assert!(o.is_ok());
     }
-  
+
     #[test]
     fn test_binding_state() {
         let output = r#"{"name": "default"}"#;

@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 /// Generic success reply
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug)]
@@ -350,6 +351,15 @@ pub struct BindingModes(Vec<String>);
 #[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone)]
 pub struct Config {
     pub config: String,
+    pub included_configs: Option<Vec<IncludedConfig>>,
+}
+
+/// Included Config Reply
+#[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone)]
+pub struct IncludedConfig {
+    pub path: PathBuf,
+    pub raw_contents: String,
+    pub variable_replaced_contents: String,
 }
 
 /// Binding State Reply
@@ -405,6 +415,13 @@ mod tests {
     #[test]
     fn test_config() {
         let output = "{\"config\": \"some config data here\"}";
+        let o: Result<Config, serde_json::error::Error> = serde_json::from_str(output);
+        assert!(o.is_ok());
+    }
+
+    #[test]
+    fn test_included_configs() {
+        let output = r#"{"config": "some config data", "included_configs": [{"path": "/some/path", "raw_contents": "some contents", "variable_replaced_contents": "some contents"}]}"#;
         let o: Result<Config, serde_json::error::Error> = serde_json::from_str(output);
         assert!(o.is_ok());
     }

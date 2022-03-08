@@ -352,6 +352,12 @@ pub struct Config {
     pub config: String,
 }
 
+/// Binding State Reply
+#[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone)]
+pub struct BindingState {
+    pub name: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -400,6 +406,13 @@ mod tests {
     fn test_config() {
         let output = "{\"config\": \"some config data here\"}";
         let o: Result<Config, serde_json::error::Error> = serde_json::from_str(output);
+        assert!(o.is_ok());
+    }
+
+    #[test]
+    fn test_binding_state() {
+        let output = r#"{"name": "default"}"#;
+        let o: Result<BindingState, serde_json::error::Error> = serde_json::from_str(output);
         assert!(o.is_ok());
     }
 

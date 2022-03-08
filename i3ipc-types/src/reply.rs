@@ -420,7 +420,6 @@ mod tests {
     }
 
     #[test]
-
     fn test_included_configs() {
         let output = r#"{"config": "some config data", "included_configs": [{"path": "/some/path", "raw_contents": "some contents", "variable_replaced_contents": "some contents"}]}"#;
         let o: Result<Config, serde_json::error::Error> = serde_json::from_str(output);

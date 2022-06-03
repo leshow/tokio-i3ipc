@@ -134,7 +134,7 @@ pub struct BindingData {
 pub struct BindingObject {
     pub command: String,
     pub event_state_mask: Vec<String>,
-    pub input_code: usize,
+    pub input_code: isize,
     pub symbol: Option<String>,
     pub input_type: BindType,
 }

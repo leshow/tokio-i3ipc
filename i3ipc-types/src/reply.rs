@@ -103,7 +103,7 @@ impl<'de> serde::Deserialize<'de> for WindowProperties {
     where
         D: serde::Deserializer<'de>,
     {
-        #[derive(Deserialize, Serialize, PartialEq, Clone, Debug)]
+        #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Debug)]
         struct Intermediate(HashMap<WindowProperty, Option<WindowData>>);
 
         #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]

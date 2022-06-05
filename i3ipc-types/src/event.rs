@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::reply;
 
-#[derive(Deserialize, Serialize, PartialEq, Debug, Clone, Copy)]
+#[derive(Deserialize, Serialize, PartialEq, Eq, Debug, Clone, Copy)]
 #[serde(rename_all = "snake_case")]
 pub enum Subscribe {
     Workspace,
@@ -75,7 +75,7 @@ pub enum WorkspaceChange {
     Move,
 }
 
-#[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
+#[derive(Deserialize, Serialize, PartialEq, Eq, Debug, Clone)]
 pub struct WorkspaceData {
     pub change: WorkspaceChange,
     pub current: Option<reply::Node>,
@@ -93,7 +93,7 @@ pub struct ModeData {
     pub pango_markup: bool,
 }
 
-#[derive(Deserialize, Serialize, PartialEq, Debug, Clone)]
+#[derive(Deserialize, Serialize, PartialEq, Eq, Debug, Clone)]
 pub struct WindowData {
     pub change: WindowChange,
     pub container: reply::Node,
@@ -134,7 +134,7 @@ pub struct BindingData {
 pub struct BindingObject {
     pub command: String,
     pub event_state_mask: Vec<String>,
-    pub input_code: usize,
+    pub input_code: isize,
     pub symbol: Option<String>,
     pub input_type: BindType,
 }

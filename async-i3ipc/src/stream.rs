@@ -12,17 +12,18 @@ impl EventStream {
     }
 
     // doesn't actually use the Stream trait because we need to use `read_exact`
-    //  and I don't feel like doing all the logic for that
+    //  and I don't feel like doing all the logic for that.
+    // Internally uses read_exact, not cancel-safe
     pub async fn next(&mut self) -> io::Result<event::Event> {
         let mut init = [0_u8; 14];
-        let _len = self.inner.read_exact(&mut init).await?;
+        self.inner.read_exact(&mut init).await?;
 
         assert!(&init[0..6] == MAGIC.as_bytes(), "Magic str not received");
         let payload_len = u32::from_ne_bytes([init[6], init[7], init[8], init[9]]) as usize;
         let msg_type = u32::from_ne_bytes([init[10], init[11], init[12], init[13]]);
 
         let mut payload = vec![0_u8; payload_len];
-        let _len_read = self.inner.read_exact(&mut payload).await?;
+        self.inner.read_exact(&mut payload).await?;
 
         decode_event(msg_type, payload)
     }

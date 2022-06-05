@@ -61,7 +61,7 @@ pub struct Node {
     pub window_rect: Rect,
     pub deco_rect: Rect,
     pub geometry: Rect,
-    pub window: Option<u32>,
+    pub window: Option<usize>,
     pub window_properties: Option<WindowProperties>,
     pub window_type: Option<WindowType>,
     pub current_border_width: i32,
@@ -103,7 +103,7 @@ impl<'de> serde::Deserialize<'de> for WindowProperties {
     where
         D: serde::Deserializer<'de>,
     {
-        #[derive(Deserialize, Serialize, PartialEq, Clone, Debug)]
+        #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Debug)]
         struct Intermediate(HashMap<WindowProperty, Option<WindowData>>);
 
         #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
@@ -232,8 +232,8 @@ pub struct Rect {
 pub struct Rect {
     pub x: isize,
     pub y: isize,
-    pub width: usize,
-    pub height: usize,
+    pub width: isize,
+    pub height: isize,
 }
 
 #[derive(Deserialize, Serialize, Eq, PartialEq, Clone, Hash, Debug, Copy)]

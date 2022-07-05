@@ -1,6 +1,6 @@
 [package]
 name = "tokio-i3ipc"
-version = "0.15.0-alpha"
+version = "0.15.0"
 authors = ["Evan Cameron <cameron.evan@gmail.com>"]
 edition = "2021"
 description = """

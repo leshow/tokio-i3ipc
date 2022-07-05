@@ -21,7 +21,7 @@ repository = "https://github.com/leshow/tokio-i3ipc/tree/master/async-i3ipc"
 async-std = { version = "1.8", features = ["attributes"] }
 serde = "1.0"
 serde_json = "1.0"
-i3ipc-types = { path = "../i3ipc-types", features = ["async-std-traits"] }
+i3ipc-types = { path = "../i3ipc-types", features = ["async-std-traits"], version = "0.15.0" }
 
 [features]
 default = []

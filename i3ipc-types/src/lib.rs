@@ -32,11 +32,11 @@ pub trait I3Protocol {
         let mut buf = Vec::with_capacity(14);
         buf.extend(<Self as I3Protocol>::MAGIC.as_bytes());
         if let Some(p) = &payload {
-            buf.extend(&(p.as_ref().len() as u32).to_ne_bytes());
+            buf.extend((p.as_ref().len() as u32).to_ne_bytes());
         } else {
-            buf.extend(&(0_u32).to_ne_bytes());
+            buf.extend((0_u32).to_ne_bytes());
         }
-        buf.extend(&<u32 as From<msg::Msg>>::from(msg).to_ne_bytes());
+        buf.extend(<u32 as From<msg::Msg>>::from(msg).to_ne_bytes());
         if let Some(p) = &payload {
             buf.extend(p.as_ref().as_bytes());
         }

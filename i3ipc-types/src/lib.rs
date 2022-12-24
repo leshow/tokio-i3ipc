@@ -74,7 +74,7 @@ pub trait I3IPC: io::Read + io::Write + I3Protocol {
         if &buf[..] != <Self as I3Protocol>::MAGIC.as_bytes() {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidData,
-                format!("Expected 'i3-ipc' but received: {:?}", buf),
+                format!("Expected 'i3-ipc' but received: {buf:?}"),
             ));
         }
         // get payload len

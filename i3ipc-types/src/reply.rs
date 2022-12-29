@@ -287,11 +287,11 @@ pub enum ScratchpadState {
 
 /// Marks Reply
 #[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone)]
-pub struct Marks(Vec<String>);
+pub struct Marks(pub Vec<String>);
 
 /// BarIds
 #[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone)]
-pub struct BarIds(Vec<String>);
+pub struct BarIds(pub Vec<String>);
 
 /// BarConfig Reply
 #[derive(Deserialize, Serialize, Eq, PartialEq, Debug, Clone)]

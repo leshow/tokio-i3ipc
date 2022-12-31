@@ -88,7 +88,7 @@ impl I3Stream {
         E: AsRef<[event::Subscribe]>,
     {
         let sub_json = serde_json::to_string(events.as_ref())?;
-        self.send_msg(msg::Msg::Subscribe, &sub_json)?;
+        self.send_msg(msg::Msg::Subscribe, sub_json)?;
         let resp: MsgResponse<reply::Success> = self.receive_msg()?;
         Ok(resp.body)
     }

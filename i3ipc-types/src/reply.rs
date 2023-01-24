@@ -55,6 +55,7 @@ pub struct Node {
     pub output: Option<String>,
     pub orientation: NodeOrientation,
     pub border: NodeBorder,
+    #[cfg(not(feature = "sway"))]
     pub scratchpad_state: ScratchpadState,
     pub percent: Option<f64>,
     pub rect: Rect,
@@ -277,6 +278,7 @@ pub enum NodeOrientation {
     None,
 }
 
+#[cfg(not(feature = "sway"))]
 #[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Debug, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
 pub enum ScratchpadState {

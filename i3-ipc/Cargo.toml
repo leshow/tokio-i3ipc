@@ -17,6 +17,10 @@ i3ipc-types = { path = "../i3ipc-types", version = "0.16.0" }
 serde = "1.0"
 serde_json = "1.0"
 
+[features]
+default = []
+sway = ["i3ipc-types/sway"]
+
 [[example]]
 name = "sync_listen"
 path = "examples/sync_listen.rs"
